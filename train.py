@@ -1,27 +1,13 @@
-import datetime
 import importlib
+import torch.distributed as dist
 
-from tqdm import tqdm
 import network
-import utils
 import os
 import random
 import argparse
 import numpy as np
 
-from torch.utils import data
-from datasets import VOCSegmentation, Cityscapes, house2k_seg
-from utils import ext_transforms as et
-from metrics import StreamSegMetrics
-
 import torch
-import torch.nn as nn
-from utils.visualizer import Visualizer
-
-from PIL import Image
-import matplotlib
-import matplotlib.pyplot as plt
-import time
 
 
 def get_argparser():
@@ -86,6 +72,9 @@ def get_argparser():
     #                     help="epoch interval for eval (default: 100)")
     parser.add_argument("--download", action='store_true', default=False,
                         help="download datasets")
+    parser.add_argument("--distributed", action='store_true', default=False,
+                        help="distributed")
+
 
     # PASCAL VOC Options
     parser.add_argument("--year", type=str, default='2012',
@@ -106,8 +95,22 @@ def get_argparser():
 def main():
     opts = get_argparser().parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    ngpus_per_node = torch.cuda.device_count()
+    if opts.distributed:
+        dist.init_process_group(backend="nccl")
+        local_rank = int(os.environ["LOCAL_RANK"])
+        rank = int(os.environ["RANK"])
+        device = torch.device("cuda", local_rank)
+        if local_rank == 0:
+            print(f"[{os.getpid()}] (rank = {rank}, local_rank = {local_rank}) training...")
+            print("Gpu Device Count : ", ngpus_per_node)
+    else:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        local_rank = 0
+
     opts.device = device
+    opts.local_rank = local_rank
     print("Device: %s" % device)
 
     # Setup random seed
