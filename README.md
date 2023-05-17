@@ -1,8 +1,8 @@
 # JointNet-Pytorch
 
-Segment method： DeepLabv3, `DeepLabv3+`
+Segment： DeepLabv3, `DeepLabv3+`
 
-Detect method： `CenterNet`
+Detect： `CenterNet`
 
 Support backbone： `ResNet50`
 
