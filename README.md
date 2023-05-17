@@ -1,6 +1,8 @@
-# DeepLabv3Plus-Pytorch
+# JointNet-Pytorch
 
-Pretrained DeepLabv3, DeepLabv3+ for Pascal VOC & Cityscapes.
+Segment method： DeepLabv3, DeepLabv3+ 
+Detect method： CenterNet
+Support backbone： ResNet50
 
 ## Quick Start 
 
@@ -14,11 +16,9 @@ Pretrained DeepLabv3, DeepLabv3+ for Pascal VOC & Cityscapes.
 |deeplabv3_hrnetv2_32 | deeplabv3plus_hrnetv2_32 |
 |deeplabv3_xception | deeplabv3plus_xception |
 
-please refer to [network/modeling.py](https://github.com/VainF/DeepLabV3Plus-Pytorch/blob/master/network/modeling.py) for all model entries.
+please refer to [network/modeling.py](https://github.com/updateforever/JointNet/network/modeling.py) for all model entries.
 
 Download pretrained models: [Dropbox](https://www.dropbox.com/sh/w3z9z8lqpi8b2w7/AAB0vkl4F5vy6HdIhmRCTKHSa?dl=0), [Tencent Weiyun](https://share.weiyun.com/qqx78Pv5)
-
-Note: The HRNet backbone was contributed by @timothylimyl. A pre-trained backbone is available at [google drive](https://drive.google.com/file/d/1NxCK7Zgn5PmeS7W1jYLt5J9E0RRZ2oyF/view?usp=sharing).
 
 ### 2. Load the pretrained model:
 ```python
