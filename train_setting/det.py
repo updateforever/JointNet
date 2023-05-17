@@ -226,7 +226,7 @@ def main(opts):
         else:
             p.requires_grad = True
 
-    optimizer = torch.optim.Adam(params=[{'params': model.backbone.parameters(), 'lr': 0.5 * opts.lr},
+    optimizer = torch.optim.Adam(params=[{'params': model.backbone.parameters(), 'lr': opts.lr},
                                          {'params': model.decoder.parameters(), 'lr': opts.lr},
                                          {'params': model.head.parameters(), 'lr': opts.lr}
                                          ], lr=opts.lr, betas=(0.9, 0.999), weight_decay=opts.weight_decay)
@@ -276,7 +276,6 @@ def main(opts):
     # =====  Train  =====
     for i in range(0, opts.train_epochs):
         cur_epochs += 1
-        cur_itrs = 0
         cur_itrs_val = 0
 
         total_r_loss = 0
@@ -285,7 +284,8 @@ def main(opts):
         val_loss = 0
 
         if cur_epochs >= 50:
-            # unfreezn
+            # unfreeze
+            print('unfreeze layer4 of backbone')
             for n, p in model.parameters():
                 if 'backbone.layer4' in n:
                     p.requires_grad = True
