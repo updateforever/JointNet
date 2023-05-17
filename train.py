@@ -75,6 +75,8 @@ def get_argparser():
     parser.add_argument("--distributed", action='store_true', default=False,
                         help="distributed")
 
+    # #detect options
+    parser.add_argument("--model_path", type=str, default='', help="model_path for train")
 
     # PASCAL VOC Options
     parser.add_argument("--year", type=str, default='2012',
