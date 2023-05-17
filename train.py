@@ -29,9 +29,7 @@ def get_argparser():
         network.modeling.__dict__[name]))
     parser.add_argument("--model", type=str, default='centernet',
                         choices=available_models, help='model name')
-    parser.add_argument("--separable_conv", action='store_true', default=False,
-                        help="apply separable conv to decoder and aspp")
-    parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
+
 
     # Train Options
     parser.add_argument("--test_only", action='store_true', default=False)
@@ -74,6 +72,11 @@ def get_argparser():
                         help="download datasets")
     parser.add_argument("--distributed", action='store_true', default=False,
                         help="distributed")
+
+    # #segment options
+    parser.add_argument("--separable_conv", action='store_true', default=False,
+                        help="apply separable conv to decoder and aspp")
+    parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
 
     # #detect options
     parser.add_argument("--model_path", type=str, default='', help="model_path for train")

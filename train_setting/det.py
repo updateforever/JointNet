@@ -188,6 +188,7 @@ def main(opts):
     print("Dataset: %s, Train set: %d, Val set: %d" % (opts.dataset, len(train_dst), len(val_dst)))
 
     # Set up model (all models are 'constructed at network.modeling)
+    UnFreeze_flag = False
     model = network.modeling.__dict__[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride)
     utils.set_bn_momentum(model.backbone, momentum=0.01)
     if opts.model_path != '':
@@ -283,12 +284,14 @@ def main(opts):
         total_loss = 0
         val_loss = 0
 
-        if cur_epochs >= 50:
+        if cur_epochs >= 50 and not UnFreeze_flag:
             # unfreeze
             print('unfreeze layer4 of backbone')
-            for n, p in model.parameters():
+            for n, p in model.named_parameters():
                 if 'backbone.layer4' in n:
                     p.requires_grad = True
+
+            UnFreeze_flag = True
 
         model.train()
         for j, batch in enumerate(train_loader):
