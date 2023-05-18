@@ -1,21 +1,28 @@
 # JointNet-Pytorch
 
-Segment： DeepLabv3, `DeepLabv3+`
+---
+We design a joint algorithm model for house plan detection and recognition, which respectively selects centernet and
+deeplabv3+ as the baseline of detection module and segmentation module.
 
-Detect： `CenterNet`
+The different depth feature informations decoded by the segmentation module and the final masked output image are used 
+to merge features with the corresponding nodes of the detection module so as to improve feature richness of the detection module.
 
-Support backbone： `ResNet50`
+The code repository provides support for joint algorithms, single detection or single segmentation algorithms, and our
+paper will release soon.
 
-## Quick Start
-
-### 1. Available Architectures
+## Available Architectures
 
 |       DeepLabV3+        |      CenterNet      |      JointNet      |
 |:-----------------------:|:-------------------:|:------------------:|
 | deeplabv3plus_resnet50  | centernet_resnet50  | JointNet_resnet50  |
 | deeplabv3plus_resnet101 | centernet_resnet101 | JointNet_resnet101 |
 
-please refer to [network/modeling.py](https://https://github.com/updateforever/JointNet/blob/main/network/modeling.py) for all model
+---
+
+## Quick Start
+
+please refer to [network/modeling.py](https://https://github.com/updateforever/JointNet/blob/main/network/modeling.py)
+for all model
 entries.
 
 Download pretrained
