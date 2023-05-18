@@ -24,11 +24,11 @@ from utils.utils_bbox import decode_bbox, postprocess
 # ---------------------------------------------------#
 #   检测图片
 # ---------------------------------------------------#
-def detect_image(image, model, opts, crop=False, count=False):
+def detect_image(image, img_data, model, opts, crop=False, count=False):
     # ---------------------------------------------------#
     #   计算输入图片的高和宽
     # ---------------------------------------------------#
-    image_shape = np.array(np.shape(image)[0:2])
+    image_shape = img_data.shape[2:]
     # ---------------------------------------------------------#
     #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
     #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
@@ -45,13 +45,10 @@ def detect_image(image, model, opts, crop=False, count=False):
     # image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
 
     with torch.no_grad():
-        # images = torch.from_numpy(np.asarray(image_data)).type(torch.FloatTensor)
-        if opts.cuda:
-            images = image.cuda()
         # ---------------------------------------------------------#
         #   将图像输入网络当中进行预测！
         # ---------------------------------------------------------#
-        outputs = model(images)
+        outputs = model(img_data)
         # -----------------------------------------------------------#
         #   利用预测结果进行解码
         # -----------------------------------------------------------#
@@ -65,7 +62,7 @@ def detect_image(image, model, opts, crop=False, count=False):
         #   所以我还是写了另外一段对框进行非极大抑制的代码
         #   实际测试中，hourglass为主干网络时有无额外的nms相差不大，resnet相差较大。
         # -------------------------------------------------------#
-        results = postprocess(outputs, opts.nms, image_shape, opts.input_shape, opts.letterbox_image, opts.nms_iou)
+        results = postprocess(outputs, opts.nms, image_shape, opts.crop_size - 1, opts.letterbox_image, opts.nms_iou)
 
         # --------------------------------------#
         #   如果没有检测到物体，则返回原图
@@ -82,7 +79,7 @@ def detect_image(image, model, opts, crop=False, count=False):
     # ---------------------------------------------------------#
     font = ImageFont.truetype(font='model_data/simhei.ttf',
                               size=np.floor(3e-2 * np.shape(image)[1] + 0.5).astype('int32'))
-    thickness = max((np.shape(image)[0] + np.shape(image)[1]) // opts.input_shape[0], 1)
+    thickness = max((np.shape(image)[0] + np.shape(image)[1]) // opts.crop_size - 1, 1)
     # ---------------------------------------------------------#
     #   计数
     # ---------------------------------------------------------#
@@ -177,7 +174,7 @@ def main(opts):
         model.to(opts.device)
 
     # ---------------------------------------------------#
-    #   计算总的类的数量
+    #   计算总的类的数量  classes_path = 'model_data/voc_house6.txt'
     # ---------------------------------------------------#
     opts.class_names, opts.num_classes = get_classes(opts.classes_path)
 
@@ -190,7 +187,7 @@ def main(opts):
 
     if opts.crop_val:
         transform = T.Compose([
-            T.Resize(opts.crop_size - 1),  # T.CenterCrop(opts.crop_size),
+            T.Resize((opts.crop_size - 1, opts.crop_size - 1)),  # T.CenterCrop(opts.crop_size),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
@@ -207,9 +204,10 @@ def main(opts):
             ext = os.path.basename(img_path).split('.')[-1]
             img_name = os.path.basename(img_path)[:-len(ext) - 1]
             img = Image.open(img_path).convert('RGB')
-            img = transform(img).unsqueeze(0)  # To tensor of NCHW
-            img = img.to(opts.device)
+            # new_image = img.resize((opts.crop_size - 1, opts.crop_size - 1), Image.BICUBIC)
+            img_data = transform(img).unsqueeze(0)  # To tensor of NCHW
+            img_data = img_data.to(opts.device)
 
-            pred_img = detect_image(img, model, opts=opts, count=True)  # HW
+            pred_img = detect_image(img, img_data, model, opts=opts, count=True)  # HW
             if opts.save_val_results_to:
                 pred_img.save(os.path.join(opts.save_val_results_to, img_name + '.jpg'))
