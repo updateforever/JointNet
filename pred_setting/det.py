@@ -204,10 +204,10 @@ def main(opts):
             ext = os.path.basename(img_path).split('.')[-1]
             img_name = os.path.basename(img_path)[:-len(ext) - 1]
             img = Image.open(img_path).convert('RGB')
-            # new_image = img.resize((opts.crop_size - 1, opts.crop_size - 1), Image.BICUBIC)
+            re_image = img.resize((opts.crop_size - 1, opts.crop_size - 1), Image.BICUBIC)
             img_data = transform(img).unsqueeze(0)  # To tensor of NCHW
             img_data = img_data.to(opts.device)
 
-            pred_img = detect_image(img, img_data, model, opts=opts, count=True)  # HW
+            pred_img = detect_image(re_image, img_data, model, opts=opts, count=True)  # HW
             if opts.save_val_results_to:
                 pred_img.save(os.path.join(opts.save_val_results_to, img_name + '.jpg'))
