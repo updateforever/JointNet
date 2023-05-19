@@ -235,14 +235,7 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
     return score, ret_samples
 
 
-def main():
-    opts = get_argparser().parse_args()
-    if opts.dataset.lower() == 'voc':
-        opts.num_classes = 21
-    elif opts.dataset.lower() == 'cityscapes':
-        opts.num_classes = 19
-    elif opts.dataset.lower() == 'house-2k':
-        opts.num_classes = 8
+def main(opts):
 
     # Setup visualization
     vis = Visualizer(port=opts.vis_port,
@@ -250,14 +243,10 @@ def main():
     if vis is not None:  # display options
         vis.vis_table("Options", vars(opts))
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print("Device: %s" % device)
-
-    # Setup random seed
-    torch.manual_seed(opts.random_seed)
-    np.random.seed(opts.random_seed)
-    random.seed(opts.random_seed)
+    # # Setup random seed
+    # torch.manual_seed(opts.random_seed)
+    # np.random.seed(opts.random_seed)
+    # random.seed(opts.random_seed)
 
     def save_ckpt(path):
         """ save current model
@@ -311,7 +300,7 @@ def main():
     elif opts.loss_type == 'cross_entropy':
         criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean')
 
-    ck_path = os.path.join(os.path.abspath('.'), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
+    ck_path = os.path.join(os.path.abspath(''), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
     utils.mkdir(ck_path)
     # Restore
     cur_epochs = 0
@@ -322,7 +311,7 @@ def main():
         checkpoint = torch.load(opts.ckpt, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint["model_state"])
         model = nn.DataParallel(model)
-        model.to(device)
+        model.to(opts.device)
         if opts.continue_training:
             optimizer.load_state_dict(checkpoint["optimizer_state"])
             scheduler.load_state_dict(checkpoint["scheduler_state"])
@@ -334,7 +323,7 @@ def main():
     else:
         print("[!] Retrain")
         model = nn.DataParallel(model)
-        model.to(device)
+        model.to(opts.device)
 
     # ==========   Train Loop   ==========#
     vis_sample_id = np.random.randint(0, len(val_loader), opts.vis_num_samples,
@@ -344,7 +333,7 @@ def main():
     if opts.test_only:
         model.eval()
         val_score, ret_samples = validate(
-            opts=opts, model=model, loader=val_loader, device=device, metrics=metrics, ret_samples_ids=vis_sample_id)
+            opts=opts, model=model, loader=val_loader, device=opts.device, metrics=metrics, ret_samples_ids=vis_sample_id)
         print(metrics.to_str(val_score))
         return
 
@@ -360,8 +349,8 @@ def main():
             total_itrs = len(train_loader)
             cur_itrs = i + 1
 
-            images = images.to(device, dtype=torch.float32)
-            labels = labels.to(device, dtype=torch.long)
+            images = images.to(opts.device, dtype=torch.float32)
+            labels = labels.to(opts.device, dtype=torch.long)
 
             optimizer.zero_grad()
             outputs = model(images)  # (b,cl,h,w)
@@ -388,7 +377,7 @@ def main():
         print("validation...")
         model.eval()
         val_score, ret_samples = validate(
-            opts=opts, model=model, loader=val_loader, device=device, metrics=metrics,
+            opts=opts, model=model, loader=val_loader, device=opts.device, metrics=metrics,
             ret_samples_ids=vis_sample_id)
         print(metrics.to_str(val_score))
         if val_score['Mean IoU'] > best_score:  # save best model

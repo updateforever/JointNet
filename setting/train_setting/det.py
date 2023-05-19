@@ -240,7 +240,7 @@ def main(opts):
 
     # Set up criterion = utils.get_loss(opts.loss_type)
     criterion = utils.DETloss()
-    ck_path = os.path.join(os.path.abspath('.'), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
+    ck_path = os.path.join(os.path.abspath(''), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
     utils.mkdir(ck_path)
     # Restore
     cur_epochs = 0

@@ -311,7 +311,7 @@ def main():
     elif opts.loss_type == 'cross_entropy':
         criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean')
 
-    ck_path = os.path.join(os.path.abspath('.'), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
+    ck_path = os.path.join(os.path.abspath(''), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
     utils.mkdir(ck_path)
     # Restore
     cur_epochs = 0
