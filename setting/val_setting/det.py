@@ -17,8 +17,8 @@ from utils.utils import (cvtColor, get_classes, preprocess_input, resize_image,
 from utils.utils_bbox import decode_bbox, postprocess
 
 
-def get_map_txt(img_data, image_id, model, opts):
-    f = open(os.path.join(opts.val_path, "detection-results/" + image_id + ".txt"), "w")
+def get_map_txt(img_data, image_id, model, map_out_path, opts):
+    f = open(os.path.join(map_out_path, "detection-results/" + image_id + ".txt"), "w")
     image_shape = img_data.shape[2:]
     with torch.no_grad():
         # ---------------------------------------------------------#
@@ -29,7 +29,7 @@ def get_map_txt(img_data, image_id, model, opts):
         #   利用预测结果进行解码
         # -----------------------------------------------------------#
         outputs = decode_bbox(outputs[0], outputs[1], outputs[2], opts.confidence, opts.device)
-        results = postprocess(outputs, opts.nms, image_shape, opts.input_shape, letterbox_image=False,
+        results = postprocess(outputs, opts.nms, image_shape, opts.crop_size - 1, letterbox_image=False,
                               nms_thres=opts.nms_iou)
 
         if results[0] is None:
@@ -68,7 +68,7 @@ def main(opts):
     data_root = os.path.join(opts.data_root, 'VOCdevkit')
     image_ids = open(os.path.join(data_root, "VOC2012/ImageSets/Main/test.txt")).read().strip().split()
 
-    if not os.path.exists(opts.map_out_path):
+    if not os.path.exists(map_out_path):
         os.makedirs(map_out_path)
     if not os.path.exists(os.path.join(map_out_path, 'ground-truth')):
         os.makedirs(os.path.join(map_out_path, 'ground-truth'))
@@ -110,7 +110,7 @@ def main(opts):
         model = model.eval()
         print("Get predict result.")
         for image_id in tqdm(image_ids):
-            image_path = os.path.join(data_root, "VOC2007/JPEGImages/" + image_id + ".jpg")
+            image_path = os.path.join(data_root, "VOC2012/JPEGImages/" + image_id + ".jpg")
             # ext = os.path.basename(image_path).split('.')[-1]
             # img_name = os.path.basename(image_path)[:-len(ext) - 1]
             img = Image.open(image_path).convert('RGB')
@@ -118,7 +118,7 @@ def main(opts):
             img_data = transform(img).unsqueeze(0)  # To tensor of N, C, H, W
             img_data = img_data.to(opts.device)
 
-            get_map_txt(img_data, image_id, model, opts=opts)  # HW
+            get_map_txt(img_data, image_id, model, map_out_path, opts=opts)  # HW
 
         print("Get predict result done.")
 
