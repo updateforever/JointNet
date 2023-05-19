@@ -185,8 +185,8 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
     metrics.reset()
     ret_samples = []
     if opts.save_val_results:
-        if not os.path.exists('results'):
-            os.mkdir('results')
+        if not os.path.exists('result/seg/results'):
+            os.mkdir('result/seg/results')
         denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406],
                                    std=[0.229, 0.224, 0.225])
         img_id = 0
