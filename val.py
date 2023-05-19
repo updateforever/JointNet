@@ -22,7 +22,7 @@ def get_argparser():
                         help="num classes (default: None)")  # 8
 
     # Model Options
-    parser.add_argument("--model_opt", type=str, default='det',
+    parser.add_argument("--mode", type=str, default='det',
                         choices=['det', 'seg', 'joint'], help='model class')
     available_models = sorted(name for name in network.modeling.__dict__ if name.islower() and \
                               not (name.startswith("__") or name.startswith('_')) and callable(
@@ -31,8 +31,14 @@ def get_argparser():
                         choices=available_models, help='model name')
 
     # Val Options
-    parser.add_argument("--gpu_id", type=str, default='0',
-                        help="GPU ID")
+    parser.add_argument("--gpu_id", type=str, default='0', help="GPU ID")
+    parser.add_argument("--MINOVERLAP", type=float, default=0.5, help="MINOVERLAP")
+    parser.add_argument("--confidence", type=float, default=0.02, help="confidence")
+    parser.add_argument("--nms_iou", type=float, default=0.5, help="nms_iou")
+    parser.add_argument("--score_threhold", type=float, default=0.5, help="score_threhold")
+    parser.add_argument("--val_path", type=str, default='D:/DPcode/JointNet/result', help="")
+    # parser.add_argument("--", type=float, default=0.5, help="")
+    # parser.add_argument("--", type=float, default=0.5, help="")
 
 
 def main():
@@ -61,7 +67,7 @@ def main():
     np.random.seed(opts.random_seed)
     random.seed(opts.random_seed)
 
-    run = importlib.import_module('val_setting.{}'.format(opts.model_opt))
+    run = importlib.import_module('setting/val_setting.{}'.format(opts.model_opt))
     run.main(opts)
 
 
