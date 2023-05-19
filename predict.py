@@ -91,7 +91,7 @@ def main():
     opts.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Device: %s" % opts.device)
 
-    run = importlib.import_module('setting/pred_setting.{}'.format(opts.model_opt))
+    run = importlib.import_module('setting.pred_setting.{}'.format(opts.model_opt))
     run.main(opts)
 
 

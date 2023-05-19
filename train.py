@@ -123,7 +123,7 @@ def main():
     np.random.seed(opts.random_seed)
     random.seed(opts.random_seed)
 
-    run = importlib.import_module('setting/train_setting.{}'.format(opts.model_opt))
+    run = importlib.import_module('setting.train_setting.{}'.format(opts.model_opt))
     run.main(opts)
 
 
