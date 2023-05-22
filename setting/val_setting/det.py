@@ -17,11 +17,11 @@ from utils.utils import (cvtColor, get_classes, preprocess_input, resize_image,
 from utils.utils_bbox import decode_bbox, postprocess
 
 
-def get_map_txt(img_data, image_id, model, map_out_path, opts):
+def get_map_txt(img_org, img_data, image_id, model, map_out_path, opts):
     if os.path.exists(os.path.join(os.path.join(map_out_path, "detection-results/" + image_id + ".txt"))):
         return
     f = open(os.path.join(map_out_path, "detection-results/" + image_id + ".txt"), "w")
-    image_shape = img_data.shape[2:]
+    image_shape = img_org.shape[:2]
     with torch.no_grad():
         # ---------------------------------------------------------#
         #   将图像输入网络当中进行预测！
@@ -120,7 +120,7 @@ def main(opts):
             img_data = transform(img).unsqueeze(0)  # To tensor of N, C, H, W
             img_data = img_data.to(opts.device)
 
-            get_map_txt(img_data, image_id, model, map_out_path, opts=opts)  # HW
+            get_map_txt(img, img_data, image_id, model, map_out_path, opts=opts)  # HW
 
         print("Get predict result done.")
 

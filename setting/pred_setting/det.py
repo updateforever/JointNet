@@ -28,30 +28,16 @@ def detect_image(image, img_data, model, opts, crop=False, count=False):
     # ---------------------------------------------------#
     #   计算输入图片的高和宽
     # ---------------------------------------------------#
-    image_shape = img_data.shape[2:]
-    # ---------------------------------------------------------#
-    #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
-    #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
-    # ---------------------------------------------------------#
-    # image = cvtColor(image)
-    # ---------------------------------------------------------#
-    #   给图像增加灰条，实现不失真的resize
-    #   也可以直接resize进行识别
-    # ---------------------------------------------------------#
-    # image_data = resize_image(image, (self.input_shape[1], self.input_shape[0]), self.letterbox_image)
-    # -----------------------------------------------------------#
-    #   图片预处理，归一化。获得的photo的shape为[1, 512, 512, 3]
-    # -----------------------------------------------------------#
+    image_shape = np.array(np.shape(image)[0:2])
+
+    # 图片预处理，归一化。获得的photo的shape为[1, 512, 512, 3]
     # image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
 
     with torch.no_grad():
-        # ---------------------------------------------------------#
-        #   将图像输入网络当中进行预测！
-        # ---------------------------------------------------------#
+        # 将图像输入网络当中进行预测！
         outputs = model(img_data)
-        # -----------------------------------------------------------#
-        #   利用预测结果进行解码
-        # -----------------------------------------------------------#
+
+        # 利用预测结果进行解码
         outputs = decode_bbox(outputs[0], outputs[1], outputs[2], opts.confidence, opts.device)
 
         # -------------------------------------------------------#
@@ -208,6 +194,6 @@ def main(opts):
             img_data = transform(img).unsqueeze(0)  # To tensor of NCHW
             img_data = img_data.to(opts.device)
 
-            pred_img = detect_image(re_image, img_data, model, opts=opts, count=True)  # HW
+            pred_img = detect_image(img, img_data, model, opts=opts, count=True)  # HW
             if opts.save_val_results_to:
                 pred_img.save(os.path.join(opts.save_val_results_to, img_name + '.jpg'))
