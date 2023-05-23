@@ -37,8 +37,9 @@ def get_argparser():
                         help="save segmentation results to \"./results\"")
     parser.add_argument("--train_epochs", type=int, default=300,
                         help="epoch number (default: 200)")
-    parser.add_argument("--total_itrs", type=int, default=300,
-                        help="epoch number (default: 30k)")
+    parser.add_argument("--optimizer", type=str, default='', help="optimizer")
+    parser.add_argument("--lr", type=float, default=5e-4,
+                        help="learning rate (default: 0.01)")
     parser.add_argument("--lr", type=float, default=5e-4,
                         help="learning rate (default: 0.01)")
     parser.add_argument("--lr_policy", type=str, default='step', choices=['poly', 'step'],
