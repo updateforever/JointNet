@@ -240,7 +240,7 @@ def main(opts):
             # unfreeze
             print('unfreeze layer4 of backbone')
             for n, p in model.named_parameters():
-                if 'backbone.layer4' in n:
+                if 'backbone' in n:  # .layer4
                     p.requires_grad = True
 
             UnFreeze_flag = True

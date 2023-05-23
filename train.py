@@ -40,8 +40,6 @@ def get_argparser():
     parser.add_argument("--optimizer", type=str, default='', help="optimizer")
     parser.add_argument("--lr", type=float, default=5e-4,
                         help="learning rate (default: 0.01)")
-    parser.add_argument("--lr", type=float, default=5e-4,
-                        help="learning rate (default: 0.01)")
     parser.add_argument("--lr_policy", type=str, default='step', choices=['poly', 'step'],
                         help="learning rate scheduler policy")
     parser.add_argument("--step_size", type=int, default=100)
