@@ -64,7 +64,7 @@ def detect_image(image, img_data, model, opts, crop=False, count=False):
     #   设置字体与边框厚度
     # ---------------------------------------------------------#
     font = ImageFont.truetype(font='model_data/simhei.ttf',
-                              size=np.floor(3e-2 * np.shape(image)[1] + 0.5).astype('int32'))
+                              size=np.floor(3e-2 * np.shape(image)[1] + 0.5 - 10).astype('int32'))
     thickness = max((np.shape(image)[0] + np.shape(image)[1]) // opts.crop_size - 1, 1)
     # ---------------------------------------------------------#
     #   计数
@@ -123,7 +123,7 @@ def detect_image(image, img_data, model, opts, crop=False, count=False):
 
         for i in range(thickness):
             draw.rectangle([left + i, top + i, right - i, bottom - i], outline=opts.colors[c])
-        draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=opts.colors[c])
+        # draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=opts.colors[c])
         draw.text(text_origin, str(label, 'UTF-8'), fill=(0, 0, 0), font=font)
         del draw
 
@@ -173,7 +173,7 @@ def main(opts):
 
     if opts.crop_val:
         transform = T.Compose([
-            T.Resize((opts.crop_size - 1, opts.crop_size - 1)),  # T.CenterCrop(opts.crop_size),
+            # T.Resize((opts.crop_size - 1, opts.crop_size - 1)),  # T.CenterCrop(opts.crop_size),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
@@ -189,11 +189,16 @@ def main(opts):
         for img_path in tqdm(image_files):
             ext = os.path.basename(img_path).split('.')[-1]
             img_name = os.path.basename(img_path)[:-len(ext) - 1]
+            # cvtColor
             img = Image.open(img_path).convert('RGB')
+            # resize
             re_image = img.resize((opts.crop_size - 1, opts.crop_size - 1), Image.BICUBIC)
-            img_data = transform(img).unsqueeze(0)  # To tensor of NCHW
-            img_data = img_data.to(opts.device)
 
-            pred_img = detect_image(img, img_data, model, opts=opts, count=True)  # HW
+            img_data = transform(re_image).unsqueeze(0)  # To tensor of NCHW
+            img_data = img_data.to(opts.device)
+            if opts.crop_img:
+                pred_img = detect_image(re_image, img_data, model, opts=opts, count=True)  # resize img
+            else:
+                pred_img = detect_image(img, img_data, model, opts=opts, count=True)  # origin img
             if opts.save_val_results_to:
                 pred_img.save(os.path.join(opts.save_val_results_to, img_name + '.jpg'))

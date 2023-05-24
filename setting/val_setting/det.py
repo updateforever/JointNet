@@ -21,7 +21,7 @@ def get_map_txt(img_org, img_data, image_id, model, map_out_path, opts):
     if os.path.exists(os.path.join(os.path.join(map_out_path, "detection-results/" + image_id + ".txt"))):
         return
     f = open(os.path.join(map_out_path, "detection-results/" + image_id + ".txt"), "w")
-    image_shape = img_org.shape[:2]
+    image_shape = np.array(np.shape(img_org)[0:2])
     with torch.no_grad():
         # ---------------------------------------------------------#
         #   将图像输入网络当中进行预测！
@@ -98,7 +98,7 @@ def main(opts):
 
     if opts.crop_val:
         transform = T.Compose([
-            T.Resize((opts.crop_size - 1, opts.crop_size - 1)),  # T.CenterCrop(opts.crop_size),
+            # T.Resize((opts.crop_size - 1, opts.crop_size - 1)),  # T.CenterCrop(opts.crop_size),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
@@ -113,11 +113,11 @@ def main(opts):
         print("Get predict result.")
         for image_id in tqdm(image_ids):
             image_path = os.path.join(data_root, "VOC2012/JPEGImages/" + image_id + ".jpg")
-            # ext = os.path.basename(image_path).split('.')[-1]
-            # img_name = os.path.basename(image_path)[:-len(ext) - 1]
             img = Image.open(image_path).convert('RGB')
-            # re_image = img.resize((opts.crop_size - 1, opts.crop_size - 1), Image.BICUBIC)
-            img_data = transform(img).unsqueeze(0)  # To tensor of N, C, H, W
+            # resize
+            re_image = img.resize((opts.crop_size - 1, opts.crop_size - 1), Image.BICUBIC)
+            # transform
+            img_data = transform(re_image).unsqueeze(0)  # To tensor of N, C, H, W
             img_data = img_data.to(opts.device)
 
             get_map_txt(img, img_data, image_id, model, map_out_path, opts=opts)  # HW

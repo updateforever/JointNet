@@ -59,7 +59,8 @@ def get_argparser():
     # Train Options
     parser.add_argument("--save_val_results_to", default=None,
                         help="save segmentation results to the specified dir")
-
+    parser.add_argument("--crop_img", action='store_true', default=False,
+                        help='whether outputting cropped img (default: False)')
     parser.add_argument("--crop_val", action='store_true', default=False,
                         help='crop validation (default: False)')
     parser.add_argument("--val_batch_size", type=int, default=4,
