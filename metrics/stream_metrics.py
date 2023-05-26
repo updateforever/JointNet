@@ -53,9 +53,8 @@ class StreamSegMetrics(_StreamMetrics):
         mask = (label_true >= 0) & (label_true < self.n_classes)
         hist = np.bincount(
             self.n_classes * label_true[mask].astype(int) + label_pred[mask],
-            minlength=self.n_classes ** 2,
-        )
-        hist = hist.reshape(self.n_classes, self.n_classes)
+            minlength=self.n_classes ** 2,).reshape(self.n_classes, self.n_classes)
+
         return hist
 
     def get_results(self):
