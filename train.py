@@ -8,6 +8,7 @@ import argparse
 import numpy as np
 
 import torch
+import warnings
 
 
 def get_argparser():
@@ -29,7 +30,6 @@ def get_argparser():
         network.modeling.__dict__[name]))
     parser.add_argument("--model", type=str, default='centernet',
                         choices=available_models, help='model name')
-
 
     # Train Options
     parser.add_argument("--test_only", action='store_true', default=False)
@@ -100,8 +100,8 @@ def main():
     opts = get_argparser().parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id
 
-    ngpus_per_node = torch.cuda.device_count()
     if opts.distributed:
+        ngpus_per_node = torch.cuda.device_count()
         dist.init_process_group(backend="nccl")
         local_rank = int(os.environ["LOCAL_RANK"])
         rank = int(os.environ["RANK"])
@@ -127,4 +127,5 @@ def main():
 
 
 if __name__ == '__main__':
+    warnings.filterwarnings('ignore')
     main()
