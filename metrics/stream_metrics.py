@@ -35,7 +35,7 @@ class StreamSegMetrics(_StreamMetrics):
 
     def update(self, label_trues, label_preds):
         for lt, lp in zip(label_trues, label_preds):
-            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten())
+            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten())  # 获取混淆矩阵
 
     @staticmethod
     def to_str(results):
@@ -54,7 +54,8 @@ class StreamSegMetrics(_StreamMetrics):
         hist = np.bincount(
             self.n_classes * label_true[mask].astype(int) + label_pred[mask],
             minlength=self.n_classes ** 2,
-        ).reshape(self.n_classes, self.n_classes)
+        )
+        hist = hist.reshape(self.n_classes, self.n_classes)
         return hist
 
     def get_results(self):

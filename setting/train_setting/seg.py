@@ -1,5 +1,6 @@
 import datetime
 
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import network
 import utils
@@ -158,7 +159,7 @@ def get_dataset(opts):
 
     if opts.dataset == 'house-2k':
         train_transform = et.ExtCompose([
-            et.ExtResize((513, 513)),
+            et.ExtResize((opts.crop_size, opts.crop_size)),
             et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
             et.ExtRandomHorizontalFlip(),
             et.ExtToTensor(),
@@ -167,7 +168,7 @@ def get_dataset(opts):
         ])
 
         val_transform = et.ExtCompose([
-            et.ExtResize((513, 513)),
+            et.ExtResize((opts.crop_size, opts.crop_size)),
             et.ExtToTensor(),
             et.ExtNormalize(mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225]),
@@ -236,7 +237,6 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
 
 
 def main(opts):
-
     # Setup visualization
     vis = Visualizer(port=opts.vis_port,
                      env=opts.vis_env) if opts.enable_vis else None
@@ -274,13 +274,13 @@ def main(opts):
           (opts.dataset, len(train_dst), len(val_dst)))
 
     # Set up model (all models are 'constructed at network.modeling)
-    model = network.modeling.__dict__[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride)
+    model = network.modeling.__dict__[opts.model](num_classes=opts.num_classes + 2, output_stride=opts.output_stride)
     if opts.separable_conv and 'plus' in opts.model:
         network.convert_to_separable_conv(model.classifier)
     utils.set_bn_momentum(model.backbone, momentum=0.01)
 
     # Set up metrics
-    metrics = StreamSegMetrics(opts.num_classes)  # 流指标？
+    metrics = StreamSegMetrics(opts.num_classes + 2)  # 流指标？
 
     # Set up optimizer
     optimizer = torch.optim.SGD(params=[
@@ -333,7 +333,8 @@ def main(opts):
     if opts.test_only:
         model.eval()
         val_score, ret_samples = validate(
-            opts=opts, model=model, loader=val_loader, device=opts.device, metrics=metrics, ret_samples_ids=vis_sample_id)
+            opts=opts, model=model, loader=val_loader, device=opts.device, metrics=metrics,
+            ret_samples_ids=vis_sample_id)
         print(metrics.to_str(val_score))
         return
 
@@ -341,9 +342,19 @@ def main(opts):
     # for k, v in sorted(vars(opts).items()):
     #     print(k, '=', v)
 
+    # tensorboard
+    time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m_%d_%H_%M')
+    log_dir = os.path.join('runs/train', str(time_str))
+    writer = SummaryWriter(log_dir=log_dir)
+    writer.add_text('Info Of Training', 'train for segment | {}'.format(opts.model))
+
     # =====  Train  =====
     for i in range(0, opts.train_epochs):
         cur_epochs += 1
+        cur_itrs = 0
+
+        total_loss = 0
+        val_loss = 0
         model.train()
         for i, (images, labels) in enumerate(train_loader):
             total_itrs = len(train_loader)
@@ -355,6 +366,7 @@ def main(opts):
             optimizer.zero_grad()
             outputs = model(images)  # (b,cl,h,w)
             loss = criterion(outputs, labels)
+            total_loss += loss
             loss.backward()
             optimizer.step()
 
@@ -363,23 +375,94 @@ def main(opts):
             if vis is not None:
                 vis.vis_scalar('Loss', cur_itrs, np_loss)
 
-            if (cur_itrs) % 5 == 0 or cur_itrs == total_itrs:  # 隔5批次打印一次
+            if cur_itrs % 5 == 0 or cur_itrs == total_itrs:  # 隔5批次打印一次log
                 interval_loss = interval_loss / 5
                 print("Epoch %d, Itrs %d/%d, Loss=%f" % (cur_epochs, cur_itrs, total_itrs, interval_loss))
                 interval_loss = 0.0
 
-            scheduler.step()
+        scheduler.step()
+        cr_lr = optimizer.param_groups[1]['lr']
+        # log train
+        writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader),
+                          global_step=cur_epochs)
+        writer.add_scalar(tag="lr", scalar_value=cr_lr, global_step=cur_epochs)
 
         # val and save pth
-        if (cur_epochs) % 5 == 0:
+        if cur_epochs % 5 == 0:
             save_ckpt(os.path.join(ck_path, 'weights_%s_%s_os%d_ep%d.pth' % (
                 opts.model, opts.dataset, opts.output_stride, cur_epochs)))
         print("validation...")
         model.eval()
-        val_score, ret_samples = validate(
-            opts=opts, model=model, loader=val_loader, device=opts.device, metrics=metrics,
-            ret_samples_ids=vis_sample_id)
-        print(metrics.to_str(val_score))
+        metrics.reset()
+        ret_samples = []
+        if opts.save_val_results:
+            if not os.path.exists('results'):
+                os.mkdir('results')
+            denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406],
+                                       std=[0.229, 0.224, 0.225])
+            img_id = 0
+
+        with torch.no_grad():
+            for i, (images, labels) in tqdm(enumerate(val_loader)):
+
+                images = images.to(opts.device, dtype=torch.float32)
+                labels = labels.to(opts.device, dtype=torch.long)
+
+                outputs = model(images)
+                val_loss += criterion(outputs, labels)
+                preds = outputs.detach().max(dim=1)[1].cpu().numpy()
+                targets = labels.cpu().numpy()
+
+                metrics.update(targets, preds)
+                if vis_sample_id is not None and i in vis_sample_id:  # get vis samples
+                    ret_samples.append(
+                        (images[0].detach().cpu().numpy(), targets[0], preds[0]))
+
+                if opts.save_val_results:
+                    for i in range(len(images)):
+                        image = images[i].detach().cpu().numpy()
+                        target = targets[i]
+                        pred = preds[i]
+
+                        image = (denorm(image) * 255).transpose(1, 2, 0).astype(np.uint8)
+                        target = val_loader.dataset.decode_target(target).astype(np.uint8)
+                        pred = val_loader.dataset.decode_target(pred).astype(np.uint8)
+
+                        Image.fromarray(image).save('results/%d_image.png' % img_id)
+                        Image.fromarray(target).save('results/%d_target.png' % img_id)
+                        Image.fromarray(pred).save('results/%d_pred.png' % img_id)
+
+                        fig = plt.figure()
+                        plt.imshow(image)
+                        plt.axis('off')
+                        plt.imshow(pred, alpha=0.7)
+                        ax = plt.gca()
+                        ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
+                        ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
+                        plt.savefig('results/%d_overlay.png' % img_id, bbox_inches='tight', pad_inches=0)
+                        plt.close()
+                        img_id += 1
+        class_iou = {}
+        val_score = metrics.get_results()
+        # score_str = metrics.to_str(val_score)
+        writer.add_scalar(tag="val/loss", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
+        writer.add_scalar(tag="val/Overall Acc", scalar_value=val_score['Overall Acc'], global_step=cur_epochs)
+        writer.add_scalar(tag="val/Mean IoU", scalar_value=val_score['Mean IoU'], global_step=cur_epochs)
+        class_iou['wall'] = val_score['Class IoU'][0]
+        class_iou['window'] = val_score['Class IoU'][1]
+        class_iou['1door'] = val_score['Class IoU'][2]
+        class_iou['2door'] = val_score['Class IoU'][3]
+        class_iou['3door'] = val_score['Class IoU'][4]
+        class_iou['pdoor'] = val_score['Class IoU'][5]
+        writer.add_scalars(main_tag="val/Class IoU", tag_scalar_dict=class_iou, global_step=cur_epochs)
+
+        for k, (img, target, lbl) in enumerate(ret_samples):
+            img = (denorm(img) * 255).astype(np.uint8)
+            target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
+            lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
+            concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
+            writer.add_image("val/img", img_tensor=concat_img, global_step=cur_epochs)
+
         if val_score['Mean IoU'] > best_score:  # save best model
             best_score = val_score['Mean IoU']
             save_ckpt(os.path.join(ck_path, 'best_%s_%s_os%d.pth' %
