@@ -211,14 +211,15 @@ def main(opts):
             # seg
             pred = seg_model(img_data).max(1)[1].cpu().numpy()[0]  # HW
             colorized_preds = opts.decode_fn(pred).astype('uint8')
-            colorized_preds = Image.fromarray(colorized_preds)
+            colorized_preds = Image.fromarray(colorized_preds)  # seg_pred_img = Image.fromarray(colorized_preds)
             # det
             mask_img_data = transform(colorized_preds).unsqueeze(0)
             mask_img_data = mask_img_data.to(opts.device)
             if opts.crop_img:
                 pred_img = detect_image(re_image, mask_img_data, det_model, opts=opts, count=True)  # resize img
             else:
-                pred_img = detect_image(img, mask_img_data, det_model, opts=opts, count=True)  # origin img
+                # pred_img = detect_image(img, mask_img_data, det_model, opts=opts, count=True)  # origin img
+                pred_img = detect_image(colorized_preds, mask_img_data, det_model, opts=opts, count=True)
             # save
             if opts.save_val_results_to:
                 pred_img.save(os.path.join(opts.save_val_results_to, img_name + '.jpg'))

@@ -35,14 +35,14 @@ def get_argparser():
     parser.add_argument("--test_only", action='store_true', default=False)
     parser.add_argument("--save_val_results", action='store_true', default=False,
                         help="save segmentation results to \"./results\"")
-    parser.add_argument("--train_epochs", type=int, default=300,
+    parser.add_argument("--train_epochs", type=int, default=250,
                         help="epoch number (default: 200)")
     parser.add_argument("--optimizer", type=str, default='', help="optimizer")
     parser.add_argument("--lr", type=float, default=5e-4,
                         help="learning rate (default: 0.01)")
     parser.add_argument("--lr_policy", type=str, default='step', choices=['poly', 'step'],
                         help="learning rate scheduler policy")
-    parser.add_argument("--step_size", type=int, default=100)
+    parser.add_argument("--step_size", type=int, default=50)
     parser.add_argument("--crop_val", action='store_true', default=False,
                         help='crop validation (default: False)')
     parser.add_argument("--batch_size", type=int, default=12,

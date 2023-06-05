@@ -174,9 +174,8 @@ def get_dataset(opts):
                             std=[0.229, 0.224, 0.225]),
         ])
 
-        train_dst = house2k_seg(root=opts.data_root, image_set='train', transform=train_transform,
-                                img_sz=opts.crop_size)
-        val_dst = house2k_seg(root=opts.data_root, image_set='val', transform=val_transform, img_sz=opts.crop_size)
+        train_dst = house2k_seg(root=opts.data_root, image_set='train', transform=train_transform)
+        val_dst = house2k_seg(root=opts.data_root, image_set='val', transform=val_transform)
 
     return train_dst, val_dst
 

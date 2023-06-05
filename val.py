@@ -13,7 +13,7 @@ import torch
 def get_argparser():
     parser = argparse.ArgumentParser()
 
-    # Datset Options
+    # Dataset Options
     parser.add_argument("--data_root", type=str, default='D:/datasets/house-2k',
                         help="path to Dataset")
     parser.add_argument("--dataset", type=str, default='house2k',
@@ -50,6 +50,11 @@ def get_argparser():
     parser.add_argument("--nms_iou", type=float, default=0.5, help="nms_iou")
     parser.add_argument("--nms", action='store_true', default=True, help="whether using nms")
     parser.add_argument("--score_threhold", type=float, default=0.5, help="score_threhold")
+
+    # SEGMENT
+    parser.add_argument("--val_batch_size", type=int, default=4, help="val batch")
+    parser.add_argument("--val_test", type=str, default='val', help="val or test set")
+
 
     return parser
 

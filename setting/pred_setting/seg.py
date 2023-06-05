@@ -22,7 +22,8 @@ from PIL import Image
 import matplotlib
 import matplotlib.pyplot as plt
 from glob import glob
-
+from torchvision.transforms import functional as F
+from torchvision.transforms.functional import InterpolationMode
 
 def main(opts):
     # Setup dataloader
@@ -58,7 +59,7 @@ def main(opts):
 
     if 1:
         transform = T.Compose([
-            T.Resize(opts.crop_size),  # T.CenterCrop(opts.crop_size),
+            T.Resize((opts.crop_size, opts.crop_size)),  # T.CenterCrop(opts.crop_size),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
@@ -75,6 +76,7 @@ def main(opts):
             ext = os.path.basename(img_path).split('.')[-1]
             img_name = os.path.basename(img_path)[:-len(ext) - 1]
             img = Image.open(img_path).convert('RGB')
+            w, h = np.array(np.shape(img)[0:2])
             img = transform(img).unsqueeze(0)  # To tensor of NCHW
             img = img.to(opts.device)
 
@@ -82,6 +84,9 @@ def main(opts):
             colorized_preds = opts.decode_fn(pred).astype('uint8')
             colorized_preds = Image.fromarray(colorized_preds)
 
+            # F.resize(colorized_preds, [h, w], InterpolationMode.BILINEAR)
+            T1 = T.Resize((w, h))
+            colorized_preds = T1(colorized_preds)
             # if 0:
             #     pred1 = voc_cmap(pred).astype(np.uint8)
             #     fig = plt.figure()

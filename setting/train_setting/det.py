@@ -80,16 +80,16 @@ def get_dataset(opts):
     #                             img_sz=opts.crop_size)
     #     val_dst = house2k_seg(root=opts.data_root, image_set='val', transform=val_transform, img_sz=opts.crop_size)
 
-    train_annotation_path = r'D:\datasets\house-2k\VOCdevkit\VOC2012\ImageSets\2012_train.txt'
-    val_annotation_path = r'D:\datasets\house-2k\VOCdevkit\VOC2012\ImageSets\2012_val.txt'
+    train_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_train.txt'
+    val_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_val.txt'
     with open(train_annotation_path) as f:
         train_lines = f.readlines()
     with open(val_annotation_path) as f:
         val_lines = f.readlines()
     num_train = len(train_lines)
     num_val = len(val_lines)
-    train_dst = CenternetDataset(train_lines, [opts.crop_size - 1, opts.crop_size - 1], opts.num_classes, train=True)
-    val_dst = CenternetDataset(val_lines, [opts.crop_size - 1, opts.crop_size - 1], opts.num_classes, train=False)
+    train_dst = CenternetDataset(train_lines, [opts.crop_size, opts.crop_size], opts.num_classes, train=True)
+    val_dst = CenternetDataset(val_lines, [opts.crop_size, opts.crop_size], opts.num_classes, train=False)
 
     return train_dst, val_dst
 

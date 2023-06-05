@@ -171,17 +171,17 @@ def main(opts):
     opts.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     opts.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), opts.colors))
 
-    if opts.crop_val:
-        transform = T.Compose([
-            # T.Resize((opts.crop_size - 1, opts.crop_size - 1)),  # T.CenterCrop(opts.crop_size),
-            T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
-    else:
-        transform = T.Compose([
-            T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+    # if opts.crop_val:
+    transform = T.Compose([
+        # T.Resize((opts.crop_size - 1, opts.crop_size - 1)),  # T.CenterCrop(opts.crop_size),
+        T.ToTensor(),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+    # else:
+    #     transform = T.Compose([
+    #         T.ToTensor(),
+    #         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    #     ])
     if opts.save_val_results_to is not None:
         os.makedirs(opts.save_val_results_to, exist_ok=True)
     with torch.no_grad():

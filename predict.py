@@ -32,7 +32,7 @@ def get_argparser():
     parser.add_argument("--dataset", type=str, default='voc',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of training set')
     parser.add_argument("--classes_path", type=str, default='D:/DPcode/centernet-pytorch-main/model_data/voc_house6.txt')
-
+    # D:/datasets/house-2k/VOCdevkit/VOC2012/JPEGImages/3.jpg
 
     # Model Options
     parser.add_argument("--mode", type=str, default='joint_v1', help='model class')
