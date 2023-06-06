@@ -1,3 +1,5 @@
+import matplotlib
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 import network
 import utils
@@ -212,14 +214,27 @@ def main(opts):
             pred = seg_model(img_data).max(1)[1].cpu().numpy()[0]  # HW
             colorized_preds = opts.decode_fn(pred).astype('uint8')
             colorized_preds = Image.fromarray(colorized_preds)  # seg_pred_img = Image.fromarray(colorized_preds)
+
+            plt.imshow(re_image)
+            plt.axis('off')
+            plt.imshow(colorized_preds, alpha=0.7)
+            ax = plt.gca()
+            ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
+            ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
+            plt.savefig(os.path.join(opts.save_val_results_to, '%s_overlay.png' % img_name), bbox_inches='tight', pad_inches=0)
+            plt.close()
+
+            mask_img = Image.open(os.path.join(opts.save_val_results_to, '%s_overlay.png' % img_name)).convert('RGB')  # cvtColor
+            mask_img = mask_img.resize((opts.crop_size, opts.crop_size), Image.BICUBIC)  # resize
+
             # det
-            mask_img_data = transform(colorized_preds).unsqueeze(0)
+            mask_img_data = transform(mask_img).unsqueeze(0)
             mask_img_data = mask_img_data.to(opts.device)
             if opts.crop_img:
                 pred_img = detect_image(re_image, mask_img_data, det_model, opts=opts, count=True)  # resize img
             else:
                 # pred_img = detect_image(img, mask_img_data, det_model, opts=opts, count=True)  # origin img
-                pred_img = detect_image(colorized_preds, mask_img_data, det_model, opts=opts, count=True)
+                pred_img = detect_image(mask_img, mask_img_data, det_model, opts=opts, count=True)
             # save
             if opts.save_val_results_to:
                 pred_img.save(os.path.join(opts.save_val_results_to, img_name + '.jpg'))
