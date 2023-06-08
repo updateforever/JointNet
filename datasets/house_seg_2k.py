@@ -47,7 +47,7 @@ class house2k_seg(data.Dataset):
         self.transform = transform
 
         self.image_set = image_set
-        base_dir = 'VOCdevkit'
+        base_dir = 'VOCdevkit/VOC2012'
         voc_root = os.path.join(self.root, base_dir)
         image_dir = os.path.join(voc_root, 'JPEGImages')
 
@@ -56,10 +56,7 @@ class house2k_seg(data.Dataset):
 
         mask_dir = os.path.join(voc_root, 'SegmentationClass')
         splits_dir = os.path.join(voc_root, 'ImageSets/Segmentation')
-        if img_sz is not None:
-            split_f = os.path.join(splits_dir, 'screen_' + image_set.rstrip('\n') + '.txt')
-        else:
-            split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
+        split_f = os.path.join(splits_dir, image_set.rstrip('\n') + '.txt')
 
         if not os.path.exists(split_f):
             raise ValueError(

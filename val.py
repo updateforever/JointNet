@@ -14,7 +14,7 @@ def get_argparser():
     parser = argparse.ArgumentParser()
 
     # Dataset Options
-    parser.add_argument("--data_root", type=str, default='D:/datasets/house-2k',
+    parser.add_argument("--data_root", type=str, default='D:/datasets/house2k',
                         help="path to Dataset")
     parser.add_argument("--dataset", type=str, default='house2k',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of dataset')
@@ -22,7 +22,7 @@ def get_argparser():
                         help="num classes (default: None)")
     parser.add_argument("--classes_path", type=str,
                         default='D:/DPcode/centernet-pytorch-main/model_data/voc_house6.txt')
-    parser.add_argument("--crop_size", type=int, default=513)  # 385  513
+    parser.add_argument("--crop_size", type=int, default=512)  #
 
     # Model Options
     parser.add_argument("--mode", type=str, default='det', choices=['det', 'seg', 'joint'], help='model class')
@@ -54,6 +54,9 @@ def get_argparser():
     # SEGMENT
     parser.add_argument("--val_batch_size", type=int, default=4, help="val batch")
     parser.add_argument("--val_test", type=str, default='val', help="val or test set")
+    parser.add_argument("--save_val_results", action='store_true', default=False, help="")
+    parser.add_argument("--save_val_results_to", type=str, default=None, help="")
+
 
 
     return parser
