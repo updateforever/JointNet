@@ -25,6 +25,7 @@ from glob import glob
 from torchvision.transforms import functional as F
 from torchvision.transforms.functional import InterpolationMode
 
+
 def main(opts):
     # Setup dataloader
     image_files = []
@@ -55,21 +56,18 @@ def main(opts):
         model = nn.DataParallel(model)
         model.to(opts.device)
 
-    # denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # denormalization for ori images
+    denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # denormalization for ori images
 
-    if 1:
-        transform = T.Compose([
-            T.Resize((opts.crop_size, opts.crop_size)),  # T.CenterCrop(opts.crop_size),
-            T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
-    # else:
-    #     transform = T.Compose([
-    #         T.ToTensor(),
-    #         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    #     ])
+    transform = T.Compose([
+        T.Resize((opts.crop_size, opts.crop_size)),  # T.CenterCrop(opts.crop_size),
+        T.ToTensor(),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
     if opts.save_val_results_to is not None:
         os.makedirs(opts.save_val_results_to, exist_ok=True)
+    os.makedirs(os.path.join(opts.save_val_results_to, 'mask'), exist_ok=True)
+    os.makedirs(os.path.join(opts.save_val_results_to, 'overlay'), exist_ok=True)
     with torch.no_grad():
         model = model.eval()
         for img_path in tqdm(image_files):
@@ -80,24 +78,32 @@ def main(opts):
             img = transform(img).unsqueeze(0)  # To tensor of NCHW
             img = img.to(opts.device)
 
-            pred = model(img).max(1)[1].cpu().numpy()[0]  # HW
-            colorized_preds = opts.decode_fn(pred).astype('uint8')
-            colorized_preds = Image.fromarray(colorized_preds)
-
-            # F.resize(colorized_preds, [h, w], InterpolationMode.BILINEAR)
-            T1 = T.Resize((w, h))
-            colorized_preds = T1(colorized_preds)
-            # if 0:
-            #     pred1 = voc_cmap(pred).astype(np.uint8)
-            #     fig = plt.figure()
-            #     plt.imshow(img)
-            #     plt.axis('off')
-            #     plt.imshow(pred1, alpha=0.7)
-            #     ax = plt.gca()
-            #     ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
-            #     ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
-            #     plt.savefig('results/%d_overlay.png' % img_name, bbox_inches='tight', pad_inches=0)
-            #     plt.close()
+            pred = model(img).max(1)[1].cpu().numpy()[0]  # H W 分类结果维度整合
+            pred = opts.decode_fn(pred).astype('uint8')  # H W C 维度调整
+            colorized_pred = Image.fromarray(pred)
+            colorized_pred = colorized_pred.resize((h, w))
 
             if opts.save_val_results_to:
-                colorized_preds.save(os.path.join(opts.save_val_results_to, img_name + '.png'))
+                colorized_pred.save(os.path.join(opts.save_val_results_to, 'mask', img_name + '.png'))
+
+            if opts.save_overlay_img:
+                fig = plt.figure()  #
+                img = img[0].detach().cpu().numpy()
+                img = (denorm(img) * 255).transpose(1, 2, 0).astype(np.uint8)
+
+                plt.imshow(img)
+                plt.axis('off')
+                plt.imshow(pred, alpha=0.7)
+                ax = plt.gca()
+                ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
+                ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
+                plt.savefig(os.path.join(opts.save_val_results_to, 'overlay', '%s.png' % img_name),
+                            bbox_inches='tight', pad_inches=0)
+                plt.close()
+
+                s_img = Image.open(os.path.join(opts.save_val_results_to, 'overlay', '%s.png' % img_name))
+                out = s_img.resize((h, w), Image.ANTIALIAS)
+                # resize image with high-quality
+                out.save(os.path.join(opts.save_val_results_to, 'overlay', '%s.png' % img_name))
+
+
