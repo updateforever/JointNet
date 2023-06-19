@@ -30,55 +30,6 @@ import time
 def get_dataset(opts):
     """ Dataset And Augmentation
     """
-    # if opts.dataset == 'voc':
-    #     train_transform = et.ExtCompose([
-    #         # et.ExtResize(size=opts.crop_size),
-    #         et.ExtRandomScale((0.5, 2.0)),
-    #         et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size), pad_if_needed=True),
-    #         et.ExtRandomHorizontalFlip(),
-    #         et.ExtToTensor(),
-    #         et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-    #                         std=[0.229, 0.224, 0.225]),
-    #     ])
-    #     if opts.crop_val:
-    #         val_transform = et.ExtCompose([
-    #             et.ExtResize(opts.crop_size),
-    #             et.ExtCenterCrop(opts.crop_size),
-    #             et.ExtToTensor(),
-    #             et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-    #                             std=[0.229, 0.224, 0.225]),
-    #         ])
-    #     else:
-    #         val_transform = et.ExtCompose([
-    #             et.ExtToTensor(),
-    #             et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-    #                             std=[0.229, 0.224, 0.225]),
-    #         ])
-    #     train_dst = VOCSegmentation(root=opts.data_root, year=opts.year,
-    #                                 image_set='train', download=opts.download, transform=train_transform)
-    #     val_dst = VOCSegmentation(root=opts.data_root, year=opts.year,
-    #                               image_set='val', download=False, transform=val_transform)
-    #
-    # if opts.dataset == 'house-2k':
-    #     train_transform = et.ExtCompose([
-    #         et.ExtResize((513, 513)),
-    #         et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-    #         et.ExtRandomHorizontalFlip(),
-    #         et.ExtToTensor(),
-    #         et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-    #                         std=[0.229, 0.224, 0.225]),
-    #     ])
-    #
-    #     val_transform = et.ExtCompose([
-    #         et.ExtResize((513, 513)),
-    #         et.ExtToTensor(),
-    #         et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-    #                         std=[0.229, 0.224, 0.225]),
-    #     ])
-    #
-    #     train_dst = house2k_seg(root=opts.data_root, image_set='train', transform=train_transform,
-    #                             img_sz=opts.crop_size)
-    #     val_dst = house2k_seg(root=opts.data_root, image_set='val', transform=val_transform, img_sz=opts.crop_size)
 
     train_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_train.txt'
     val_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_val.txt'

@@ -152,3 +152,7 @@ def main(opts):
         print("Get map.")
         get_map(opts.MINOVERLAP, True, score_threhold=opts.score_threhold, path=map_out_path)
         print("Get map done.")
+
+        print("Get COCO map.")
+        get_coco_map(class_names=opts.class_names, path=map_out_path)
+        print("Get COCO map done.")

@@ -1,3 +1,4 @@
+from .models.joint.joint import joint_resnet
 from .models.segment import *
 from .models.detect import *
 
@@ -22,6 +23,15 @@ def _load_model(arch_type, backbone, num_classes, output_stride, pretrained_back
 def _load_model_det(arch_type, backbone, num_classes, output_stride, pretrained_backbone):
     if backbone.startswith('resnet'):
         model = det_resnet(arch_type, backbone, num_classes, output_stride=output_stride,
+                           pretrained_backbone=pretrained_backbone)
+    else:
+        raise NotImplementedError
+    return model
+
+
+def _load_model_joint(arch_type, backbone, num_classes, output_stride, pretrained_backbone):
+    if backbone.startswith('resnet'):
+        model = joint_resnet(arch_type, backbone, num_classes, output_stride=output_stride,
                            pretrained_backbone=pretrained_backbone)
     else:
         raise NotImplementedError
@@ -153,4 +163,16 @@ def centernet_resnet50(num_classes=21, output_stride=8, pretrained_backbone=True
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
     return _load_model_det('centernet', 'resnet50', num_classes, output_stride=output_stride,
+                           pretrained_backbone=pretrained_backbone)
+
+
+def jointnet_resnet50(num_classes=21, output_stride=8, pretrained_backbone=True):
+    """Constructs a centernet model with a resnet50 backbone.
+
+    Args:
+        num_classes (int): number of classes.
+        output_stride (int): output stride for deeplab.
+        pretrained_backbone (bool): If True, use the pretrained backbone.
+    """
+    return _load_model_det('jointnet', 'resnet50', num_classes, output_stride=output_stride,
                            pretrained_backbone=pretrained_backbone)

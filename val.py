@@ -18,11 +18,11 @@ def get_argparser():
                         help="path to Dataset")
     parser.add_argument("--dataset", type=str, default='house2k',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of dataset')
-    parser.add_argument("--num_classes", type=int, default=6,
+    parser.add_argument("--num_classes", type=int, default=5,
                         help="num classes (default: None)")
     parser.add_argument("--classes_path", type=str,
-                        default='D:/DPcode/centernet-pytorch-main/model_data/voc_house6.txt')
-    parser.add_argument("--crop_size", type=int, default=512)  #
+                        default='D:/datasets/house2k/class.txt')
+    parser.add_argument("--crop_size", type=int, default=640)  # 512
 
     # Model Options
     parser.add_argument("--mode", type=str, default='det', choices=['det', 'seg', 'joint'], help='model class')
