@@ -1,5 +1,6 @@
 import datetime
 
+import wandb
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import network
@@ -30,9 +31,9 @@ import time
 def get_dataset(opts):
     """ Dataset And Augmentation
     """
-
-    train_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_train.txt'
-    val_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_val.txt'
+    # 8:2 划分训练和测试集
+    train_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_trainval_coco.txt'
+    val_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_test_coco.txt'
     with open(train_annotation_path) as f:
         train_lines = f.readlines()
     with open(val_annotation_path) as f:
@@ -46,18 +47,27 @@ def get_dataset(opts):
 
 
 def main(opts):
-    if opts.dataset.lower() == 'voc':
-        opts.num_classes = 21
-    elif opts.dataset.lower() == 'cityscapes':
-        opts.num_classes = 19
-    elif opts.dataset.lower() == 'house-2k':
-        opts.num_classes = 6  # 6
-
     # Setup visualization
-    vis = Visualizer(port=opts.vis_port,
-                     env=opts.vis_env) if opts.enable_vis else None
-    if vis is not None:  # display options
-        vis.vis_table("Options", vars(opts))
+    # vis = Visualizer(port=opts.vis_port,
+    #                  env=opts.vis_env) if opts.enable_vis else None
+    # if vis is not None:  # display options
+    #     vis.vis_table("Options", vars(opts))
+
+    # # tensorboard
+    # time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
+    # log_dir = os.path.join('runs/det/train', str(time_str))
+    # writer = SummaryWriter(log_dir=log_dir)
+
+    config = dict(
+        learning_rate=0.01,
+        momentum=0.2,
+        architecture="CNN",
+    )
+
+    wb = wandb.init(project='det',
+                    name='centernet-resnet50',
+                    config=opts,
+                    resume='None',)
 
     def save_ckpt(path):
         """ save current model
@@ -106,6 +116,37 @@ def main(opts):
             if k in model_dict.keys() and np.shape(model_dict[k]) == np.shape(v):
                 temp_dict[k] = v
                 load_key.append(k)
+                continue
+            elif k.replace('.0.', '.conv1.') in model_dict.keys() and np.shape(
+                    model_dict[k.replace('.0.', '.conv1.')]) == np.shape(v):
+                temp_dict[k.replace('.0.', '.conv1.')] = v
+                load_key.append(k)
+                continue
+            elif k.replace('.1.', '.bn1.') in model_dict.keys() and np.shape(
+                    model_dict[k.replace('.1.', '.bn1.')]) == np.shape(v):
+                temp_dict[k.replace('.1.', '.bn1.')] = v
+                load_key.append(k)
+                continue
+            elif k.replace('.4.', '.layer1.') in model_dict.keys() and np.shape(
+                    model_dict[k.replace('.4.', '.layer1.')]) == np.shape(v):
+                temp_dict[k.replace('.4.', '.layer1.')] = v
+                load_key.append(k)
+                continue
+            elif k.replace('.5.', '.layer2.') in model_dict.keys() and np.shape(
+                    model_dict[k.replace('.5.', '.layer2.')]) == np.shape(v):
+                temp_dict[k.replace('.5.', '.layer2.')] = v
+                load_key.append(k)
+                continue
+            elif k.replace('.6.', '.layer3.') in model_dict.keys() and np.shape(
+                    model_dict[k.replace('.6.', '.layer3.')]) == np.shape(v):
+                temp_dict[k.replace('.6.', '.layer3.')] = v
+                load_key.append(k)
+                continue
+            elif k.replace('.7.', '.layer4.') in model_dict.keys() and np.shape(
+                    model_dict[k.replace('.7.', '.layer4.')]) == np.shape(v):
+                temp_dict[k.replace('.7.', '.layer4.')] = v
+                load_key.append(k)
+                continue
             else:
                 no_load_key.append(k)
         model_dict.update(temp_dict)
@@ -167,14 +208,6 @@ def main(opts):
         model = nn.DataParallel(model)
         model.to(opts.device)
 
-    # tensorboard
-    time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m_%d_%H_%M')
-    log_dir = os.path.join('runs/train', str(time_str))
-    writer = SummaryWriter(log_dir=log_dir)
-    '''
-        tensorboard 
-    '''
-
     # ==========   Train Loop   ==========#
     best_loss = 1e8
     # =====  Train  =====
@@ -189,7 +222,7 @@ def main(opts):
 
         if cur_epochs >= 50 and not UnFreeze_flag:
             # unfreeze
-            print('unfreeze layer4 of backbone')
+            print('unfreeze backbone')
             for n, p in model.named_parameters():
                 if 'backbone' in n:  # .layer4
                     p.requires_grad = True
@@ -226,12 +259,14 @@ def main(opts):
         scheduler.step()
         cr_lr = optimizer.param_groups[0]['lr']
 
+        '''
+        
         # log train
         writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader), global_step=cur_epochs)
         writer.add_scalar(tag="train/cl_loss", scalar_value=total_c_loss / len(train_loader), global_step=cur_epochs)
         writer.add_scalar(tag="train/re_loss", scalar_value=total_r_loss / len(train_loader), global_step=cur_epochs)
         writer.add_scalar(tag="train/lr", scalar_value=cr_lr, global_step=cur_epochs)
-        '''
+        
         if vis is not None:
             vis.vis_scalar('Loss', cur_epochs, total_loss / cur_itrs)
             vis.vis_scalar('CL_Loss', cur_epochs, total_c_loss / cur_itrs)
@@ -252,8 +287,14 @@ def main(opts):
 
                 val_loss += loss
 
-        # log val
-        writer.add_scalar(tag="loss/val", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
+        # log wb
+        wb.log({'loss': total_loss / len(train_loader),
+                'cl_loss': total_c_loss / len(train_loader),
+                're_loss': total_r_loss / len(train_loader),
+                'epoch': cur_epochs, 'learning rate': cr_lr,
+                'val_loss': val_loss / len(val_loader)})
+
+        # writer.add_scalar(tag="loss/val", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
         print('Finish Validation')
         print('Epoch:' + str(cur_epochs) + '/' + str(opts.train_epochs))
         print('Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / len(train_loader), val_loss / cur_itrs_val))
@@ -266,5 +307,7 @@ def main(opts):
             save_ckpt(os.path.join(ck_path, 'weights_%s_%s_ep%d.pth' % (
                 opts.model, opts.dataset, cur_epochs)))
 
-    writer.close()
+    # wb.save('model.h5')
+    wb.finish()
+
     print('train done')

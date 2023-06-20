@@ -19,7 +19,7 @@ def get_argparser():
                         help="path to Dataset")
     parser.add_argument("--dataset", type=str, default='house-2k',
                         choices=['voc', 'cityscapes', 'house-2k'], help='Name of dataset')
-    parser.add_argument("--num_classes", type=int, default=None,
+    parser.add_argument("--num_classes", type=int, default='',
                         help="num classes (default: None)")  # 8
 
     # Model Options
@@ -35,7 +35,7 @@ def get_argparser():
     parser.add_argument("--test_only", action='store_true', default=False)
     parser.add_argument("--save_val_results", action='store_true', default=False,
                         help="save segmentation results to \"./results\"")
-    parser.add_argument("--train_epochs", type=int, default=250,
+    parser.add_argument("--train_epochs", type=int, default=200,
                         help="epoch number (default: 200)")
     parser.add_argument("--optimizer", type=str, default='', help="optimizer")
     parser.add_argument("--lr", type=float, default=5e-4,
@@ -47,9 +47,9 @@ def get_argparser():
                         help='crop validation (default: False)')
     parser.add_argument("--batch_size", type=int, default=12,
                         help='batch size (default: 16)')
-    parser.add_argument("--val_batch_size", type=int, default=8,
+    parser.add_argument("--val_batch_size", type=int, default=10,
                         help='batch size for validation (default: 4)')
-    parser.add_argument("--crop_size", type=int, default=512)  # 385  513
+    parser.add_argument("--crop_size", type=int, default=640)  # 512  640
 
     parser.add_argument("--ckpt", default=None, type=str,
                         help="restore from checkpoint")
@@ -59,7 +59,7 @@ def get_argparser():
                         choices=['cross_entropy', 'focal_loss'], help="loss type (default: False)")
     parser.add_argument("--gpu_id", type=str, default='0',
                         help="GPU ID")
-    parser.add_argument("--weight_decay", type=float, default=0,
+    parser.add_argument("--weight_decay", type=float, default=1e-4,
                         help='weight decay (default: 1e-4)')
     parser.add_argument("--random_seed", type=int, default=1,
                         help="random seed (default: 1)")
