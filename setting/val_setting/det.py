@@ -2,7 +2,7 @@ import datetime
 import os
 import xml.etree.ElementTree as ET
 
-from utils.utils_map import get_coco_map, get_map
+from utils.utils_map import get_coco_map, get_map, get_coco_per_class_map
 from tqdm import tqdm
 import network
 import utils
@@ -161,3 +161,10 @@ def main(opts):
         print("Get COCO map.")
         get_coco_map(class_names=opts.class_names, path=map_out_path)
         print("Get COCO map done.")
+
+        print("Get COCO per class map.")
+        det_json = os.path.join(map_out_path, 'coco_eval', 'instances_gt.json')
+        gt_json = os.path.join(map_out_path, 'coco_eval', 'instances_dr.json')
+        CLASSES = opts.class_names
+        get_coco_per_class_map(det_json, gt_json, CLASSES)
+        print("Get COCO per class map done.")

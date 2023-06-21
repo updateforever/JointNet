@@ -175,10 +175,13 @@ def main(opts):
         scheduler = utils.PolyLR(optimizer, opts.total_itrs, power=0.9)
     elif opts.lr_policy == 'step':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.step_size, gamma=0.1)
+    else:
+        ValueError('no scheduler')
 
     # Set up criterion = utils.get_loss(opts.loss_type)
     criterion = utils.DETloss()
-    ck_path = os.path.join(os.path.abspath(''), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
+    ck_path = os.path.join(os.path.abspath(''), 'result', opts.mode, 'train',
+                           time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
     utils.mkdir(ck_path)
     # Restore
     cur_epochs = 0
