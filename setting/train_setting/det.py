@@ -297,6 +297,7 @@ def main(opts):
         print('Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / len(train_loader), val_loss / cur_itrs_val))
         # save best model
         if val_loss / cur_itrs_val < best_loss:
+            print('Update best weights with %d epoch' % cur_epochs)
             best_loss = val_loss
             save_ckpt(os.path.join(ck_path, 'best_%s_%s.pth' % (opts.model, opts.dataset)))
         # save 5x.pth
