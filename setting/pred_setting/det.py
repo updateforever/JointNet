@@ -1,3 +1,5 @@
+import datetime
+
 from tqdm import tqdm
 import network
 import utils
@@ -114,7 +116,7 @@ def detect_image(image, img_data, model, opts, crop=False, count=False):
         draw = ImageDraw.Draw(image)
         label_size = draw.textsize(label, font)
         label = label.encode('utf-8')
-        print(label, top, left, bottom, right)
+        # print(label, top, left, bottom, right)
 
         if top - label_size[1] >= 0:
             text_origin = np.array([left, top - label_size[1]])
@@ -138,6 +140,13 @@ def main(opts):
             files = glob(os.path.join(opts.input, '**/*.%s' % (ext)), recursive=True)
             if len(files) > 0:
                 image_files.extend(files)
+    elif os.path.isfile(opts.input) and opts.input.find('txt'):
+        base_path = 'D:/datasets/house2k/VOCdevkit/VOC2012/JPEGImages'
+        image_ids = open(opts.input).read().strip().split()
+        for i, image_id in enumerate(image_ids):
+            image_id = os.path.join(base_path, image_id + '.jpg') if not image_ids[0].find('jpg') else \
+                os.path.join(base_path, image_id)
+            image_files.append(image_id)
     elif os.path.isfile(opts.input):
         image_files.append(opts.input)
 
@@ -183,7 +192,9 @@ def main(opts):
     #         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     #     ])
     if opts.save_val_results_to is not None:
-        os.makedirs(opts.save_val_results_to, exist_ok=True)
+        time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
+        save_path = os.path.join('D:/DPcode/JointNet/result', opts.mode, 'predict', time_str, )
+        os.makedirs(save_path, exist_ok=True)
     with torch.no_grad():
         model = model.eval()
         for img_path in tqdm(image_files):
@@ -192,7 +203,7 @@ def main(opts):
             # cvtColor
             img = Image.open(img_path).convert('RGB')
             # resize
-            re_image = img.resize((opts.crop_size - 1, opts.crop_size - 1), Image.BICUBIC)
+            re_image = img.resize((opts.crop_size, opts.crop_size), Image.BICUBIC)
 
             img_data = transform(re_image).unsqueeze(0)  # To tensor of NCHW
             img_data = img_data.to(opts.device)
@@ -201,4 +212,4 @@ def main(opts):
             else:
                 pred_img = detect_image(img, img_data, model, opts=opts, count=True)  # origin img
             if opts.save_val_results_to:
-                pred_img.save(os.path.join(opts.save_val_results_to, img_name + '.jpg'))
+                pred_img.save(os.path.join(save_path, img_name + '.jpg'))

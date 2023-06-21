@@ -31,7 +31,7 @@ def get_argparser():
                         help="path to a single image or image directory")
     parser.add_argument("--dataset", type=str, default='voc',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of training set')
-    parser.add_argument("--classes_path", type=str, default='D:/DPcode/centernet-pytorch-main/model_data/voc_house6.txt')
+    parser.add_argument("--classes_path", type=str, default='D:/datasets/house2k/class.txt')
     # D:/datasets/house-2k/VOCdevkit/VOC2012/JPEGImages/3.jpg
 
     # Model Options
@@ -61,8 +61,8 @@ def get_argparser():
                         choices=available_models, help='model name')
     parser.add_argument("--seg_model", type=str, default='deeplabv3plus_resnet50',
                         choices=available_models, help='model name')
-    parser.add_argument("--det_ckpt", default='D:/DPcode/JointNet/network/524-best_centernet_resnet50_house-2k.pth',
-                        type=str, help="resume from checkpoint")
+    parser.add_argument("--det_ckpt", default='', type=str, help="resume from checkpoint")
+    # D:/DPcode/JointNet/network/524-best_centernet_resnet50_house-2k.pth
     parser.add_argument("--seg_ckpt", default='D:/DPcode/JointNet/checkpoints/2023-04-17_17-57/'
                                               'best_deeplabv3plus_resnet50_house-2k_os16-0418.pth',
                         type=str, help="resume from checkpoint")
@@ -94,7 +94,7 @@ def main():
         opts.num_classes = 8
         opts.decode_fn = house2k_seg.decode_target
     elif opts.dataset.lower() == 'house2k':
-        opts.num_classes = 6
+        opts.num_classes = 5
         opts.decode_fn = house2k_seg.decode_target
 
     os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id

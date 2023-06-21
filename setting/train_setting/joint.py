@@ -10,6 +10,7 @@ import numpy as np
 
 from torch.utils import data
 from datasets import VOCSegmentation, Cityscapes, house2k_seg
+from datasets.house_det_2k import CenternetDataset
 from utils import ext_transforms as et
 from metrics import StreamSegMetrics
 
@@ -26,78 +27,17 @@ import time
 def get_dataset(opts):
     """ Dataset And Augmentation
     """
-    if opts.dataset == 'voc':
-        train_transform = et.ExtCompose([
-            # et.ExtResize(size=opts.crop_size),
-            et.ExtRandomScale((0.5, 2.0)),
-            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size), pad_if_needed=True),
-            et.ExtRandomHorizontalFlip(),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
-        ])
-        if opts.crop_val:
-            val_transform = et.ExtCompose([
-                et.ExtResize(opts.crop_size),
-                et.ExtCenterCrop(opts.crop_size),
-                et.ExtToTensor(),
-                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225]),
-            ])
-        else:
-            val_transform = et.ExtCompose([
-                et.ExtToTensor(),
-                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225]),
-            ])
-        train_dst = VOCSegmentation(root=opts.data_root, year=opts.year,
-                                    image_set='train', download=opts.download, transform=train_transform)
-        val_dst = VOCSegmentation(root=opts.data_root, year=opts.year,
-                                  image_set='val', download=False, transform=val_transform)
-
-    if opts.dataset == 'cityscapes':
-        train_transform = et.ExtCompose([
-            # et.ExtResize( 512 ),
-            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size)),
-            et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-            et.ExtRandomHorizontalFlip(),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
-        ])
-
-        val_transform = et.ExtCompose([
-            # et.ExtResize( 512 ),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
-        ])
-
-        train_dst = Cityscapes(root=opts.data_root,
-                               split='train', transform=train_transform)
-        val_dst = Cityscapes(root=opts.data_root,
-                             split='val', transform=val_transform)
-
-    if opts.dataset == 'house-2k':
-        train_transform = et.ExtCompose([
-            et.ExtResize((512, 512)),
-            et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
-            et.ExtRandomHorizontalFlip(),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
-        ])
-
-        val_transform = et.ExtCompose([
-            et.ExtResize((512, 512)),
-            et.ExtToTensor(),
-            et.ExtNormalize(mean=[0.485, 0.456, 0.406],
-                            std=[0.229, 0.224, 0.225]),
-        ])
-
-        train_dst = house2k_seg(root=opts.data_root, image_set='train', transform=train_transform,
-                                img_sz=opts.crop_size)
-        val_dst = house2k_seg(root=opts.data_root, image_set='val', transform=val_transform, img_sz=opts.crop_size)
+    # 8:2 划分训练和测试集
+    train_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_trainval_coco.txt'
+    val_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_test_coco.txt'
+    with open(train_annotation_path) as f:
+        train_lines = f.readlines()
+    with open(val_annotation_path) as f:
+        val_lines = f.readlines()
+    num_train = len(train_lines)
+    num_val = len(val_lines)
+    train_dst = CenternetDataset(train_lines, [opts.crop_size, opts.crop_size], opts.num_classes, train=True)
+    val_dst = CenternetDataset(val_lines, [opts.crop_size, opts.crop_size], opts.num_classes, train=False)
 
     return train_dst, val_dst
 
@@ -158,12 +98,6 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
 
 
 def main(opts):
-    if opts.dataset.lower() == 'voc':
-        opts.num_classes = 21
-    elif opts.dataset.lower() == 'cityscapes':
-        opts.num_classes = 19
-    elif opts.dataset.lower() == 'house-2k':
-        opts.num_classes = 8
 
     # Setup visualization
     vis = Visualizer(port=opts.vis_port,
@@ -196,10 +130,10 @@ def main(opts):
 
     train_dst, val_dst = get_dataset(opts)
     train_loader = data.DataLoader(
-        train_dst, batch_size=opts.batch_size, shuffle=True, num_workers=2,
+        train_dst, batch_size=opts.batch_size, shuffle=True, num_workers=4,
         drop_last=True)  # drop_last=True to ignore single-image batches.
     val_loader = data.DataLoader(
-        val_dst, batch_size=opts.val_batch_size, shuffle=True, num_workers=2)
+        val_dst, batch_size=opts.val_batch_size, shuffle=True, num_workers=4)
     print("Dataset: %s, Train set: %d, Val set: %d" %
           (opts.dataset, len(train_dst), len(val_dst)))
 

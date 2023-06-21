@@ -17,8 +17,8 @@ def get_argparser():
     # Datset Options
     parser.add_argument("--data_root", type=str, default='D:/datasets/houseS-2k',
                         help="path to Dataset")
-    parser.add_argument("--dataset", type=str, default='house-2k',
-                        choices=['voc', 'cityscapes', 'house-2k'], help='Name of dataset')
+    parser.add_argument("--dataset", type=str, default='house2k',
+                        choices=['voc', 'cityscapes', 'house2k'], help='Name of dataset')
     parser.add_argument("--num_classes", type=int, default='',
                         help="num classes (default: None)")  # 8
 

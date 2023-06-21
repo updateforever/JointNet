@@ -2,8 +2,9 @@ from network.utils import IntermediateLayerGetter
 from network.backbone import (
     resnet,
 )
+from .jointnetv1 import *
 from ..detect.centernet import Decoder, Head, CenterNet
-from ..segment.segment import DeepLabHead, DeepLabHeadV3Plus
+from ..segment.segment import DeepLabHead
 
 
 def joint_resnet(name, backbone_name, num_classes, output_stride, pretrained_backbone):
@@ -20,7 +21,9 @@ def joint_resnet(name, backbone_name, num_classes, output_stride, pretrained_bac
         return_layers = {'layer4': 'layer4', 'layer1': 'layer1', 'layer2': 'layer2', 'layer3': 'layer3'}
         decoder = Decoder(2048)
         head = Head(channel=64, num_classes=num_classes)
+        seg_head = DeepLabHeadV3Plus()
     backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
 
-    model = CenterNet(backbone, decoder, head)
+    model = JointNetV1(backbone, decoder, head, seg_head)
     return model
+

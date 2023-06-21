@@ -1,3 +1,4 @@
+import datetime
 import os
 import xml.etree.ElementTree as ET
 
@@ -66,9 +67,13 @@ def main(opts):
         受到mAP计算原理的限制，网络在计算mAP时需要获得近乎所有的预测框，这样才可以计算不同门限条件下的Recall和Precision值
         因此，本代码获得的map_out/detection-results/里面的txt的框的数量一般会比直接predict多一些，目的是列出所有可能的预测框，
     """
-    map_out_path = os.path.join(opts.val_path, opts.mode, 'val')  # 结果存放路径
+    time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
+    map_out_path = os.path.join(opts.val_path, opts.mode, 'val', str(time_str))  # 结果存放路径
     data_root = os.path.join(opts.data_root, 'VOCdevkit')
-    image_ids = open(os.path.join(data_root, "VOC2012/ImageSets/Main/test.txt")).read().strip().split()
+    image_ids = open(os.path.join(data_root, "VOC2012/ImageSets/Main/test_coco.txt")).read().strip().split()
+    if image_ids[0].find('jpg'):
+        for i, image_id in enumerate(image_ids):
+            image_ids[i] = image_id.replace('.jpg', '')
 
     if not os.path.exists(map_out_path):
         os.makedirs(map_out_path)

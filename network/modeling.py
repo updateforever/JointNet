@@ -32,7 +32,7 @@ def _load_model_det(arch_type, backbone, num_classes, output_stride, pretrained_
 def _load_model_joint(arch_type, backbone, num_classes, output_stride, pretrained_backbone):
     if backbone.startswith('resnet'):
         model = joint_resnet(arch_type, backbone, num_classes, output_stride=output_stride,
-                           pretrained_backbone=pretrained_backbone)
+                             pretrained_backbone=pretrained_backbone)
     else:
         raise NotImplementedError
     return model
@@ -174,5 +174,5 @@ def jointnet_resnet50(num_classes=21, output_stride=8, pretrained_backbone=True)
         output_stride (int): output stride for deeplab.
         pretrained_backbone (bool): If True, use the pretrained backbone.
     """
-    return _load_model_det('jointnet', 'resnet50', num_classes, output_stride=output_stride,
-                           pretrained_backbone=pretrained_backbone)
+    return _load_model_joint('jointnet', 'resnet50', num_classes, output_stride=output_stride,
+                             pretrained_backbone=pretrained_backbone)
