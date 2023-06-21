@@ -58,16 +58,10 @@ def main(opts):
     # log_dir = os.path.join('runs/det/train', str(time_str))
     # writer = SummaryWriter(log_dir=log_dir)
 
-    config = dict(
-        learning_rate=0.01,
-        momentum=0.2,
-        architecture="CNN",
-    )
-
     wb = wandb.init(project='det',
                     name='centernet-resnet50',
                     config=opts,
-                    resume='None',)
+                    resume='None', )
 
     def save_ckpt(path):
         """ save current model
