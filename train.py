@@ -15,7 +15,7 @@ def get_argparser():
     parser = argparse.ArgumentParser()
 
     # Datset Options
-    parser.add_argument("--data_root", type=str, default='D:/datasets/houseS-2k',
+    parser.add_argument("--data_root", type=str, default='D:/datasets/house2k',
                         help="path to Dataset")
     parser.add_argument("--dataset", type=str, default='house2k',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of dataset')
@@ -35,7 +35,7 @@ def get_argparser():
     parser.add_argument("--test_only", action='store_true', default=False)
     parser.add_argument("--save_val_results", action='store_true', default=False,
                         help="save segmentation results to \"./results\"")
-    parser.add_argument("--train_epochs", type=int, default=200,
+    parser.add_argument("--train_epochs", type=int, default=150,
                         help="epoch number (default: 200)")
     parser.add_argument("--optimizer", type=str, default='', help="optimizer")
     parser.add_argument("--lr", type=float, default=5e-4,
@@ -49,7 +49,7 @@ def get_argparser():
                         help='batch size (default: 16)')
     parser.add_argument("--val_batch_size", type=int, default=10,
                         help='batch size for validation (default: 4)')
-    parser.add_argument("--crop_size", type=int, default=640)  # 512  640
+    parser.add_argument("--crop_size", type=int, default=512)  # 512  640
 
     parser.add_argument("--ckpt", default=None, type=str,
                         help="restore from checkpoint")

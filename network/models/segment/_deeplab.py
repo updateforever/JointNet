@@ -146,13 +146,13 @@ class ASPP(nn.Module):
         modules.append(nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)))
+            nn.ReLU(inplace=True)))  # 1x1卷积
 
-        rate1, rate2, rate3 = tuple(atrous_rates)
-        modules.append(ASPPConv(in_channels, out_channels, rate1))
+        rate1, rate2, rate3 = tuple(atrous_rates)  # 12 24 36
+        modules.append(ASPPConv(in_channels, out_channels, rate1))  # 3x3空洞卷积
         modules.append(ASPPConv(in_channels, out_channels, rate2))
         modules.append(ASPPConv(in_channels, out_channels, rate3))
-        modules.append(ASPPPooling(in_channels, out_channels))
+        modules.append(ASPPPooling(in_channels, out_channels))  # 全局平均池化
 
         self.convs = nn.ModuleList(modules)
 

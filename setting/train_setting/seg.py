@@ -1,5 +1,6 @@
 import datetime
 
+import wandb
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import network
@@ -24,83 +25,83 @@ import matplotlib.pyplot as plt
 import time
 
 
-def get_argparser():
-    parser = argparse.ArgumentParser()
-
-    # Datset Options
-    parser.add_argument("--data_root", type=str, default='D:/datasets/houseS-2k',
-                        help="path to Dataset")
-    parser.add_argument("--dataset", type=str, default='house-2k',
-                        choices=['voc', 'cityscapes', 'house-2k'], help='Name of dataset')
-    parser.add_argument("--num_classes", type=int, default=None,
-                        help="num classes (default: None)")  # 8
-
-    # Deeplab Options
-    available_models = sorted(name for name in network.modeling.__dict__ if name.islower() and \
-                              not (name.startswith("__") or name.startswith('_')) and callable(
-        network.modeling.__dict__[name])
-                              )
-    parser.add_argument("--model", type=str, default='centernet',
-                        choices=available_models, help='model name')
-    parser.add_argument("--separable_conv", action='store_true', default=False,
-                        help="apply separable conv to decoder and aspp")
-    parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
-
-    # Train Options
-    parser.add_argument("--test_only", action='store_true', default=False)
-    parser.add_argument("--save_val_results", action='store_true', default=False,
-                        help="save segmentation results to \"./results\"")
-    parser.add_argument("--train_epochs", type=int, default=300,
-                        help="epoch number (default: 200)")
-    parser.add_argument("--total_itrs", type=int, default=30000,
-                        help="epoch number (default: 30k)")
-    parser.add_argument("--lr", type=float, default=0.01,
-                        help="learning rate (default: 0.01)")
-    parser.add_argument("--lr_policy", type=str, default='poly', choices=['poly', 'step'],
-                        help="learning rate scheduler policy")
-    parser.add_argument("--step_size", type=int, default=10000)
-    parser.add_argument("--crop_val", action='store_true', default=False,
-                        help='crop validation (default: False)')
-    parser.add_argument("--batch_size", type=int, default=16,
-                        help='batch size (default: 16)')
-    parser.add_argument("--val_batch_size", type=int, default=4,
-                        help='batch size for validation (default: 4)')
-    parser.add_argument("--crop_size", type=int, default=513)  # 385  513
-
-    parser.add_argument("--ckpt", default=None, type=str,
-                        help="restore from checkpoint")
-    parser.add_argument("--continue_training", action='store_true', default=False)
-
-    parser.add_argument("--loss_type", type=str, default='focal_loss',
-                        choices=['cross_entropy', 'focal_loss'], help="loss type (default: False)")
-    parser.add_argument("--gpu_id", type=str, default='0',
-                        help="GPU ID")
-    parser.add_argument("--weight_decay", type=float, default=1e-4,
-                        help='weight decay (default: 1e-4)')
-    parser.add_argument("--random_seed", type=int, default=1,
-                        help="random seed (default: 1)")
-    # parser.add_argument("--print_interval", type=int, default=10,
-    #                     help="print interval of loss (default: 10)")
-    # parser.add_argument("--val_interval", type=int, default=100,
-    #                     help="epoch interval for eval (default: 100)")
-    parser.add_argument("--download", action='store_true', default=False,
-                        help="download datasets")
-
-    # PASCAL VOC Options
-    parser.add_argument("--year", type=str, default='2012',
-                        choices=['2012_aug', '2012', '2011', '2009', '2008', '2007'], help='year of VOC')
-
-    # Visdom options
-    parser.add_argument("--enable_vis", action='store_true', default=False,
-                        help="use visdom for visualization")
-    parser.add_argument("--vis_port", type=str, default='13570',  # --enable_vis --vis_port 28333
-                        help='port for visdom')
-    parser.add_argument("--vis_env", type=str, default='main',
-                        help='env for visdom')
-    parser.add_argument("--vis_num_samples", type=int, default=8,
-                        help='number of samples for visualization (default: 8)')
-    return parser
-
+# def get_argparser():
+#     parser = argparse.ArgumentParser()
+#
+#     # Datset Options
+#     parser.add_argument("--data_root", type=str, default='D:/datasets/houseS-2k',
+#                         help="path to Dataset")
+#     parser.add_argument("--dataset", type=str, default='house-2k',
+#                         choices=['voc', 'cityscapes', 'house-2k'], help='Name of dataset')
+#     parser.add_argument("--num_classes", type=int, default=None,
+#                         help="num classes (default: None)")  # 8
+#
+#     # Deeplab Options
+#     available_models = sorted(name for name in network.modeling.__dict__ if name.islower() and \
+#                               not (name.startswith("__") or name.startswith('_')) and callable(
+#         network.modeling.__dict__[name])
+#                               )
+#     parser.add_argument("--model", type=str, default='centernet',
+#                         choices=available_models, help='model name')
+#     parser.add_argument("--separable_conv", action='store_true', default=False,
+#                         help="apply separable conv to decoder and aspp")
+#     parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
+#
+#     # Train Options
+#     parser.add_argument("--test_only", action='store_true', default=False)
+#     parser.add_argument("--save_val_results", action='store_true', default=False,
+#                         help="save segmentation results to \"./results\"")
+#     parser.add_argument("--train_epochs", type=int, default=300,
+#                         help="epoch number (default: 200)")
+#     parser.add_argument("--total_itrs", type=int, default=30000,
+#                         help="epoch number (default: 30k)")
+#     parser.add_argument("--lr", type=float, default=0.01,
+#                         help="learning rate (default: 0.01)")
+#     parser.add_argument("--lr_policy", type=str, default='poly', choices=['poly', 'step'],
+#                         help="learning rate scheduler policy")
+#     parser.add_argument("--step_size", type=int, default=10000)
+#     parser.add_argument("--crop_val", action='store_true', default=False,
+#                         help='crop validation (default: False)')
+#     parser.add_argument("--batch_size", type=int, default=16,
+#                         help='batch size (default: 16)')
+#     parser.add_argument("--val_batch_size", type=int, default=4,
+#                         help='batch size for validation (default: 4)')
+#     parser.add_argument("--crop_size", type=int, default=513)  # 385  513
+#
+#     parser.add_argument("--ckpt", default=None, type=str,
+#                         help="restore from checkpoint")
+#     parser.add_argument("--continue_training", action='store_true', default=False)
+#
+#     parser.add_argument("--loss_type", type=str, default='focal_loss',
+#                         choices=['cross_entropy', 'focal_loss'], help="loss type (default: False)")
+#     parser.add_argument("--gpu_id", type=str, default='0',
+#                         help="GPU ID")
+#     parser.add_argument("--weight_decay", type=float, default=1e-4,
+#                         help='weight decay (default: 1e-4)')
+#     parser.add_argument("--random_seed", type=int, default=1,
+#                         help="random seed (default: 1)")
+#     # parser.add_argument("--print_interval", type=int, default=10,
+#     #                     help="print interval of loss (default: 10)")
+#     # parser.add_argument("--val_interval", type=int, default=100,
+#     #                     help="epoch interval for eval (default: 100)")
+#     parser.add_argument("--download", action='store_true', default=False,
+#                         help="download datasets")
+#
+#     # PASCAL VOC Options
+#     parser.add_argument("--year", type=str, default='2012',
+#                         choices=['2012_aug', '2012', '2011', '2009', '2008', '2007'], help='year of VOC')
+#
+#     # Visdom options
+#     parser.add_argument("--enable_vis", action='store_true', default=False,
+#                         help="use visdom for visualization")
+#     parser.add_argument("--vis_port", type=str, default='13570',  # --enable_vis --vis_port 28333
+#                         help='port for visdom')
+#     parser.add_argument("--vis_env", type=str, default='main',
+#                         help='env for visdom')
+#     parser.add_argument("--vis_num_samples", type=int, default=8,
+#                         help='number of samples for visualization (default: 8)')
+#     return parser
+#
 
 def get_dataset(opts):
     """ Dataset And Augmentation
@@ -157,7 +158,7 @@ def get_dataset(opts):
         val_dst = Cityscapes(root=opts.data_root,
                              split='val', transform=val_transform)
 
-    if opts.dataset == 'house-2k':
+    if opts.dataset == 'house2k':
         train_transform = et.ExtCompose([
             et.ExtResize((opts.crop_size, opts.crop_size)),
             et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
@@ -174,8 +175,8 @@ def get_dataset(opts):
                             std=[0.229, 0.224, 0.225]),
         ])
 
-        train_dst = house2k_seg(root=opts.data_root, image_set='train', transform=train_transform)
-        val_dst = house2k_seg(root=opts.data_root, image_set='val', transform=val_transform)
+        train_dst = house2k_seg(root=opts.data_root, image_set='trainval_coco', transform=train_transform)
+        val_dst = house2k_seg(root=opts.data_root, image_set='test_coco', transform=val_transform)
 
     return train_dst, val_dst
 
@@ -237,10 +238,11 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
 
 def main(opts):
     # Setup visualization
-    vis = Visualizer(port=opts.vis_port,
-                     env=opts.vis_env) if opts.enable_vis else None
-    if vis is not None:  # display options
-        vis.vis_table("Options", vars(opts))
+    name = opts.model + '--' + str(datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M'))
+    wb = wandb.init(project='seg',
+                    name=name,
+                    config=opts,
+                    id='jay')
 
     # # Setup random seed
     # torch.manual_seed(opts.random_seed)
@@ -265,10 +267,10 @@ def main(opts):
 
     train_dst, val_dst = get_dataset(opts)
     train_loader = data.DataLoader(
-        train_dst, batch_size=opts.batch_size, shuffle=True, num_workers=2,
+        train_dst, batch_size=opts.batch_size, shuffle=True, num_workers=4,
         drop_last=True)  # drop_last=True to ignore single-image batches.
     val_loader = data.DataLoader(
-        val_dst, batch_size=opts.val_batch_size, shuffle=True, num_workers=2)
+        val_dst, batch_size=opts.val_batch_size, shuffle=True, num_workers=4)
     print("Dataset: %s, Train set: %d, Val set: %d" %
           (opts.dataset, len(train_dst), len(val_dst)))
 
@@ -299,7 +301,8 @@ def main(opts):
     elif opts.loss_type == 'cross_entropy':
         criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean')
 
-    ck_path = os.path.join(os.path.abspath(''), 'checkpoints', time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
+    ck_path = os.path.join(os.path.abspath(''), 'result', opts.model_opt, 'train',
+                           time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
     utils.mkdir(ck_path)
     # Restore
     cur_epochs = 0
@@ -341,11 +344,11 @@ def main(opts):
     # for k, v in sorted(vars(opts).items()):
     #     print(k, '=', v)
 
-    # tensorboard
-    time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m_%d_%H_%M')
-    log_dir = os.path.join('runs/train', str(time_str))
-    writer = SummaryWriter(log_dir=log_dir)
-    writer.add_text('Info Of Training', 'train for segment | {}'.format(opts.model))
+    # # tensorboard
+    # time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m_%d_%H_%M')
+    # log_dir = os.path.join('runs/train', str(time_str))
+    # writer = SummaryWriter(log_dir=log_dir)
+    # writer.add_text('Info Of Training', 'train for segment | {}'.format(opts.model))
 
     # =====  Train  =====
     for i in range(0, opts.train_epochs):
@@ -371,8 +374,6 @@ def main(opts):
 
             np_loss = loss.detach().cpu().numpy()
             interval_loss += np_loss
-            if vis is not None:
-                vis.vis_scalar('Loss', cur_itrs, np_loss)
 
             if cur_itrs % 5 == 0 or cur_itrs == total_itrs:  # 隔5批次打印一次log
                 interval_loss = interval_loss / 5
@@ -381,10 +382,6 @@ def main(opts):
 
         scheduler.step()
         cr_lr = optimizer.param_groups[1]['lr']
-        # log train
-        writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader),
-                          global_step=cur_epochs)
-        writer.add_scalar(tag="lr", scalar_value=cr_lr, global_step=cur_epochs)
 
         # val and save pth
         if cur_epochs % 5 == 0:
@@ -441,44 +438,43 @@ def main(opts):
                         plt.savefig('results/%d_overlay.png' % img_id, bbox_inches='tight', pad_inches=0)
                         plt.close()
                         img_id += 1
-        class_iou = {}
-        val_score = metrics.get_results()
-        # score_str = metrics.to_str(val_score)
-        writer.add_scalar(tag="val/loss", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
-        writer.add_scalar(tag="val/Overall Acc", scalar_value=val_score['Overall Acc'], global_step=cur_epochs)
-        writer.add_scalar(tag="val/Mean IoU", scalar_value=val_score['Mean IoU'], global_step=cur_epochs)
-        class_iou['wall'] = val_score['Class IoU'][0]
-        class_iou['window'] = val_score['Class IoU'][1]
-        class_iou['1door'] = val_score['Class IoU'][2]
-        class_iou['2door'] = val_score['Class IoU'][3]
-        class_iou['3door'] = val_score['Class IoU'][4]
-        class_iou['pdoor'] = val_score['Class IoU'][5]
-        writer.add_scalars(main_tag="val/Class IoU", tag_scalar_dict=class_iou, global_step=cur_epochs)
 
-        for k, (img, target, lbl) in enumerate(ret_samples):
-            img = (denorm(img) * 255).astype(np.uint8)
-            target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
-            lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
-            concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
-            writer.add_image("val/img", img_tensor=concat_img, global_step=cur_epochs)
+        # log
+        # writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader),
+        #                   global_step=cur_epochs)
+        # writer.add_scalar(tag="lr", scalar_value=cr_lr, global_step=cur_epochs)
+        # class_iou = {}
+        # val_score = metrics.get_results()
+        # # score_str = metrics.to_str(val_score)
+        # writer.add_scalar(tag="val/loss", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
+        # writer.add_scalar(tag="val/Overall Acc", scalar_value=val_score['Overall Acc'], global_step=cur_epochs)
+        # writer.add_scalar(tag="val/Mean IoU", scalar_value=val_score['Mean IoU'], global_step=cur_epochs)
+        # class_iou['wall'] = val_score['Class IoU'][0]
+        # class_iou['window'] = val_score['Class IoU'][1]
+        # class_iou['1door'] = val_score['Class IoU'][2]
+        # class_iou['2door'] = val_score['Class IoU'][3]
+        # class_iou['3door'] = val_score['Class IoU'][4]
+        # class_iou['pdoor'] = val_score['Class IoU'][5]
+        # writer.add_scalars(main_tag="val/Class IoU", tag_scalar_dict=class_iou, global_step=cur_epochs)
+        val_score = metrics.get_results()
+        wb.log({'loss': total_loss / len(train_loader),
+                'val_loss': val_loss / len(val_loader),
+                'Overall Acc': val_score['Overall Acc'],
+                'Mean IoU': val_score['Mean IoU'],
+                'learning rate': cr_lr,
+                'epoch': cur_epochs,
+                })
+
+        # for k, (img, target, lbl) in enumerate(ret_samples):
+        #     img = (denorm(img) * 255).astype(np.uint8)
+        #     target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
+        #     lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
+        #     concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
+        #     writer.add_image("val/img", img_tensor=concat_img, global_step=cur_epochs)
 
         if val_score['Mean IoU'] > best_score:  # save best model
             best_score = val_score['Mean IoU']
             save_ckpt(os.path.join(ck_path, 'best_%s_%s_os%d.pth' %
                                    (opts.model, opts.dataset, opts.output_stride)))
+    print('train done')
 
-        if vis is not None:  # visualize validation score and samples
-            vis.vis_scalar("[Val] Overall Acc", cur_itrs, val_score['Overall Acc'])
-            vis.vis_scalar("[Val] Mean IoU", cur_itrs, val_score['Mean IoU'])
-            vis.vis_table("[Val] Class IoU", val_score['Class IoU'])
-
-            for k, (img, target, lbl) in enumerate(ret_samples):
-                img = (denorm(img) * 255).astype(np.uint8)
-                target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
-                lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
-                concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
-                vis.vis_image('Sample %d' % k, concat_img)
-
-
-if __name__ == '__main__':
-    main()

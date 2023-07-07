@@ -1,8 +1,4 @@
-import math
-
-import torch
-from torch import nn
-from torch.nn import functional as F
+from .joint import *
 
 
 class JointNetV1(nn.Module):
@@ -14,12 +10,12 @@ class JointNetV1(nn.Module):
         self.seg_head = seg_head
 
     def forward(self, x):
-        feat = self.backbone(x)
-        feat_l4 = feat['layer4']  # layer n
-        feat_l2 = feat['layer2']
-        seg_feat = self.seg_head(feat_l2, feat_l4)
-        d_feat = self.decoder(feat_l4, seg_feat)
-        output = self.head(d_feat, seg_feat)
+        input_shape = x.shape[-2:]
+        features = self.backbone(x)
+        seg_feats = self.seg_head(features)
+        # x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
+        det_feat = self.decoder(features, seg_feats)
+        output = self.head(seg_feats, det_feat)
         return output
 
     def freeze_backbone(self):
@@ -31,92 +27,23 @@ class JointNetV1(nn.Module):
             param.requires_grad = True
 
 
-class DeepLabHeadV3Plus(nn.Module):
-    def __init__(self, in_channels, low_level_channels, num_classes, aspp_dilate=[12, 24, 36]):
-        super(DeepLabHeadV3Plus, self).__init__()
-        self.project = nn.Sequential(
-            nn.Conv2d(low_level_channels, 48, 1, bias=False),
-            nn.BatchNorm2d(48),
-            nn.ReLU(inplace=True),
-        )
+def joint_resnet(name, backbone_name, num_classes, output_stride, pretrained_backbone):
+    if output_stride == 8:
+        replace_stride_with_dilation = [False, True, True]
+        aspp_dilate = [12, 24, 36]
+    else:
+        replace_stride_with_dilation = [False, False, False]  # 检测先不减下采样
+        aspp_dilate = [6, 12, 18]
 
-        self.aspp = ASPP(in_channels, aspp_dilate)
+    backbone = resnet.__dict__[backbone_name](
+        pretrained=pretrained_backbone,
+        replace_stride_with_dilation=replace_stride_with_dilation)
 
-        self.classifier = nn.Sequential(
-            nn.Conv2d(304, 256, 3, padding=1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, num_classes, 1)
-        )
-        self._init_weight()
+    return_layers = {'layer1': 'layer1', 'layer2': 'layer2', 'layer3': 'layer3', 'layer4': 'layer4'}
+    decoder = JointDecoder(2048)
+    head = JointHead(channel=64, num_classes=num_classes)
+    seg_head = DeepLabHeadV3Plus(2048, 256, num_classes, aspp_dilate)
+    backbone = IntermediateLayerGetter(backbone, return_layers=return_layers)
 
-    def forward(self, feature):
-        low_level_feature = self.project(feature['low_level'])
-        output_feature = self.aspp(feature['out'])
-        output_feature = F.interpolate(output_feature, size=low_level_feature.shape[2:], mode='bilinear',
-                                       align_corners=False)
-        return self.classifier(torch.cat([low_level_feature, output_feature], dim=1))
-
-    def _init_weight(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-
-
-class ASPPConv(nn.Sequential):
-    def __init__(self, in_channels, out_channels, dilation):
-        modules = [
-            nn.Conv2d(in_channels, out_channels, 3, padding=dilation, dilation=dilation, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
-        ]
-        super(ASPPConv, self).__init__(*modules)
-
-
-class ASPPPooling(nn.Sequential):
-    def __init__(self, in_channels, out_channels):
-        super(ASPPPooling, self).__init__(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(in_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True))
-
-    def forward(self, x):
-        size = x.shape[-2:]
-        x = super(ASPPPooling, self).forward(x)
-        return F.interpolate(x, size=size, mode='bilinear', align_corners=False)
-
-
-class ASPP(nn.Module):
-    def __init__(self, in_channels, atrous_rates):
-        super(ASPP, self).__init__()
-        out_channels = 256
-        modules = []
-        modules.append(nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)))
-
-        rate1, rate2, rate3 = tuple(atrous_rates)
-        modules.append(ASPPConv(in_channels, out_channels, rate1))
-        modules.append(ASPPConv(in_channels, out_channels, rate2))
-        modules.append(ASPPConv(in_channels, out_channels, rate3))
-        modules.append(ASPPPooling(in_channels, out_channels))
-
-        self.convs = nn.ModuleList(modules)
-
-        self.project = nn.Sequential(
-            nn.Conv2d(5 * out_channels, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.1), )
-
-    def forward(self, x):
-        res = []
-        for conv in self.convs:
-            res.append(conv(x))
-        res = torch.cat(res, dim=1)
-        return self.project(res)
+    model = JointNetV1(backbone, decoder, head, seg_head)
+    return model

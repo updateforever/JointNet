@@ -99,10 +99,8 @@ def get_dataset(opts):
                             std=[0.229, 0.224, 0.225]),
         ])
 
-        train_dst = house2k_seg(root=opts.data_root, image_set='trainval', transform=train_transform,
-                                img_sz=opts.crop_size)
-        val_dst = house2k_seg(root=opts.data_root, image_set='test', transform=val_transform, img_sz=opts.crop_size)
-
+        train_dst = house2k_seg(root=opts.data_root, image_set='trainval_coco', transform=train_transform)
+        val_dst = house2k_seg(root=opts.data_root, image_set='test_coco', transform=val_transform)
         return train_dst, val_dst
 
     raise ValueError('must have dataset opts')
@@ -114,7 +112,8 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
     ret_samples = []
     save_path = 'result'
     if opts.save_val_results:
-        save_path = opts.save_val_results_to
+        time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
+        save_path = os.path.join(opts.val_path, opts.mode, 'val', str(time_str))  # 结果存放路径
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 
@@ -158,7 +157,7 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
                     ax = plt.gca()
                     ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
                     ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
-                    plt.savefig(os.path.join(save_path, '%d_overlay.jpg' % img_id), bbox_inches='tight', pad_inches=0)
+                    plt.savefig(os.path.join(save_path, '%d_overlay.png' % img_id), bbox_inches='tight', pad_inches=0)
                     plt.close()
                     img_id += 1
 

@@ -1,4 +1,4 @@
-from .models.joint.joint import joint_resnet
+from .models.joint.jointnetv1 import joint_resnet
 from .models.segment import *
 from .models.detect import *
 

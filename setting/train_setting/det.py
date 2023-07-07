@@ -57,11 +57,11 @@ def main(opts):
     # time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
     # log_dir = os.path.join('runs/det/train', str(time_str))
     # writer = SummaryWriter(log_dir=log_dir)
-
+    name = 'centernet-resnet50--' + str(datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M'))
     wb = wandb.init(project='det',
-                    name='centernet-resnet50',
+                    name=name,
                     config=opts,
-                    resume='None', )
+                    id='jay')
 
     def save_ckpt(path):
         """ save current model
@@ -180,7 +180,7 @@ def main(opts):
 
     # Set up criterion = utils.get_loss(opts.loss_type)
     criterion = utils.DETloss()
-    ck_path = os.path.join(os.path.abspath(''), 'result', opts.mode, 'train',
+    ck_path = os.path.join(os.path.abspath(''), 'result', opts.model_opt, 'train',
                            time.strftime("%Y-%m-%d_%H-%M", time.localtime()))
     utils.mkdir(ck_path)
     # Restore

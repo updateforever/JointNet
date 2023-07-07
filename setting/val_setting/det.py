@@ -163,8 +163,18 @@ def main(opts):
         print("Get COCO map done.")
 
         print("Get COCO per class map.")
-        det_json = os.path.join(map_out_path, 'coco_eval', 'instances_gt.json')
-        gt_json = os.path.join(map_out_path, 'coco_eval', 'instances_dr.json')
+        det_json = os.path.join(map_out_path, 'coco_eval', 'instances_dr.json')
+        gt_json = os.path.join(map_out_path, 'coco_eval', 'instances_gt.json')
         CLASSES = opts.class_names
         get_coco_per_class_map(det_json, gt_json, CLASSES)
         print("Get COCO per class map done.")
+
+
+if __name__ == '__main__':
+    map_out_path = r'D:\DPcode\JointNet\result\det\val\06-25_10-47'
+    print("Get COCO per class map.")
+    det_json = os.path.join(map_out_path, 'coco_eval', 'instances_dr.json')
+    gt_json = os.path.join(map_out_path, 'coco_eval', 'instances_gt.json')
+    CLASSES = ('wall', 'window', 'ddd', 'double_door', 'push_door')
+    get_coco_per_class_map(det_json, gt_json, CLASSES)
+    print("Get COCO per class map done.")
