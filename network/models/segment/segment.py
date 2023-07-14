@@ -36,7 +36,7 @@ def segm_resnet(name, backbone_name, num_classes, output_stride, pretrained_back
         aspp_dilate = [12, 24, 36]
     else:
         replace_stride_with_dilation = [False, False, True]
-        aspp_dilate = [6, 12, 18]
+        aspp_dilate = [6, 12, 18]  # 3 6 9?
 
     backbone = resnet.__dict__[backbone_name](
         pretrained=pretrained_backbone,

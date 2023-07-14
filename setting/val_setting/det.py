@@ -72,6 +72,7 @@ def main(opts):
     data_root = os.path.join(opts.data_root, 'VOCdevkit')
     image_ids = open(os.path.join(data_root, "VOC2012/ImageSets/Main/test_coco.txt")).read().strip().split()
     if image_ids[0].find('jpg'):
+
         for i, image_id in enumerate(image_ids):
             image_ids[i] = image_id.replace('.jpg', '')
 

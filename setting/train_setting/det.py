@@ -32,8 +32,8 @@ def get_dataset(opts):
     """ Dataset And Augmentation
     """
     # 8:2 划分训练和测试集
-    train_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_trainval_coco.txt'
-    val_annotation_path = r'D:\datasets\house2k\VOCdevkit\VOC2012\ImageSets\2012_test_coco.txt'
+    train_annotation_path = r'D:\datasets\house2k-master\VOCdevkit\VOC2012\ImageSets\2012_trainval_coco.txt'
+    val_annotation_path = r'D:\datasets\house2k-master\VOCdevkit\VOC2012\ImageSets\2012_test_coco.txt'
     with open(train_annotation_path) as f:
         train_lines = f.readlines()
     with open(val_annotation_path) as f:
@@ -53,11 +53,11 @@ def main(opts):
     # if vis is not None:  # display options
     #     vis.vis_table("Options", vars(opts))
 
-    # # tensorboard
-    # time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
-    # log_dir = os.path.join('runs/det/train', str(time_str))
-    # writer = SummaryWriter(log_dir=log_dir)
-    name = 'centernet-resnet50--' + str(datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M'))
+    # tensorboard
+    time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
+    log_dir = os.path.join('runs/det/train', str(time_str))
+    writer = SummaryWriter(log_dir=log_dir)
+    name = 'centernet-resnet50--' + str(time_str)
     wb = wandb.init(project='det',
                     name=name,
                     config=opts,
@@ -257,14 +257,7 @@ def main(opts):
         cr_lr = optimizer.param_groups[0]['lr']
 
         '''
-        
-        # log train
-        writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader), global_step=cur_epochs)
-        writer.add_scalar(tag="train/cl_loss", scalar_value=total_c_loss / len(train_loader), global_step=cur_epochs)
-        writer.add_scalar(tag="train/re_loss", scalar_value=total_r_loss / len(train_loader), global_step=cur_epochs)
-        writer.add_scalar(tag="train/lr", scalar_value=cr_lr, global_step=cur_epochs)
-        
-        if vis is not None:
+            if vis is not None:
             vis.vis_scalar('Loss', cur_epochs, total_loss / cur_itrs)
             vis.vis_scalar('CL_Loss', cur_epochs, total_c_loss / cur_itrs)
             vis.vis_scalar('RE_Loss', cur_epochs, total_r_loss / cur_itrs)
@@ -284,6 +277,16 @@ def main(opts):
 
                 val_loss += loss
 
+        # log train
+        writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader),
+                          global_step=cur_epochs)
+        writer.add_scalar(tag="train/cl_loss", scalar_value=total_c_loss / len(train_loader),
+                          global_step=cur_epochs)
+        writer.add_scalar(tag="train/re_loss", scalar_value=total_r_loss / len(train_loader),
+                          global_step=cur_epochs)
+        writer.add_scalar(tag="train/lr", scalar_value=cr_lr, global_step=cur_epochs)
+        writer.add_scalar(tag="loss/val", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
+
         # log wb
         wb.log({'loss': total_loss / len(train_loader),
                 'cl_loss': total_c_loss / len(train_loader),
@@ -291,7 +294,6 @@ def main(opts):
                 'epoch': cur_epochs, 'learning rate': cr_lr,
                 'val_loss': val_loss / len(val_loader)})
 
-        # writer.add_scalar(tag="loss/val", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
         print('Finish Validation')
         print('Epoch:' + str(cur_epochs) + '/' + str(opts.train_epochs))
         print('Total Loss: %.3f || Val Loss: %.3f ' % (total_loss / len(train_loader), val_loss / cur_itrs_val))

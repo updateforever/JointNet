@@ -31,7 +31,7 @@ def get_argparser():
                         help="path to a single image or image directory")
     parser.add_argument("--dataset", type=str, default='voc',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of training set')
-    parser.add_argument("--classes_path", type=str, default='D:/datasets/house2k/class.txt')
+    parser.add_argument("--classes_path", type=str, default='D:/datasets/house2k-master/class.txt')
     # D:/datasets/house-2k/VOCdevkit/VOC2012/JPEGImages/3.jpg
 
     # Model Options

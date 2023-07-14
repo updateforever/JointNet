@@ -239,11 +239,14 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
 def main(opts):
     # Setup visualization
     name = opts.model + '--' + str(datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M'))
-    wb = wandb.init(project='seg',
-                    name=name,
-                    config=opts,
-                    id='jay')
-
+    # wb = wandb.init(project='seg',
+    #                 name=name,
+    #                 config=opts,
+    #                 id='jay')
+    # tensorboard
+    time_str = datetime.datetime.strftime(datetime.datetime.now(), '%m-%d_%H-%M')
+    log_dir = os.path.join('runs/seg/train', str(time_str))
+    writer = SummaryWriter(log_dir=log_dir)
     # # Setup random seed
     # torch.manual_seed(opts.random_seed)
     # np.random.seed(opts.random_seed)
@@ -440,30 +443,23 @@ def main(opts):
                         img_id += 1
 
         # log
-        # writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader),
-        #                   global_step=cur_epochs)
-        # writer.add_scalar(tag="lr", scalar_value=cr_lr, global_step=cur_epochs)
-        # class_iou = {}
-        # val_score = metrics.get_results()
-        # # score_str = metrics.to_str(val_score)
-        # writer.add_scalar(tag="val/loss", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
-        # writer.add_scalar(tag="val/Overall Acc", scalar_value=val_score['Overall Acc'], global_step=cur_epochs)
-        # writer.add_scalar(tag="val/Mean IoU", scalar_value=val_score['Mean IoU'], global_step=cur_epochs)
-        # class_iou['wall'] = val_score['Class IoU'][0]
-        # class_iou['window'] = val_score['Class IoU'][1]
-        # class_iou['1door'] = val_score['Class IoU'][2]
-        # class_iou['2door'] = val_score['Class IoU'][3]
-        # class_iou['3door'] = val_score['Class IoU'][4]
-        # class_iou['pdoor'] = val_score['Class IoU'][5]
-        # writer.add_scalars(main_tag="val/Class IoU", tag_scalar_dict=class_iou, global_step=cur_epochs)
+        writer.add_scalar(tag="train/total_loss", scalar_value=total_loss / len(train_loader),
+                          global_step=cur_epochs)
+        writer.add_scalar(tag="lr", scalar_value=cr_lr, global_step=cur_epochs)
+
         val_score = metrics.get_results()
-        wb.log({'loss': total_loss / len(train_loader),
-                'val_loss': val_loss / len(val_loader),
-                'Overall Acc': val_score['Overall Acc'],
-                'Mean IoU': val_score['Mean IoU'],
-                'learning rate': cr_lr,
-                'epoch': cur_epochs,
-                })
+        # score_str = metrics.to_str(val_score)
+        writer.add_scalar(tag="val/loss", scalar_value=val_loss / len(val_loader), global_step=cur_epochs)
+        writer.add_scalar(tag="val/Overall Acc", scalar_value=val_score['Overall Acc'], global_step=cur_epochs)
+        writer.add_scalar(tag="val/Mean IoU", scalar_value=val_score['Mean IoU'], global_step=cur_epochs)
+
+        # wb.log({'loss': total_loss / len(train_loader),
+        #         'val_loss': val_loss / len(val_loader),
+        #         'Overall Acc': val_score['Overall Acc'],
+        #         'Mean IoU': val_score['Mean IoU'],
+        #         'learning rate': cr_lr,
+        #         'epoch': cur_epochs,
+        #         })
 
         # for k, (img, target, lbl) in enumerate(ret_samples):
         #     img = (denorm(img) * 255).astype(np.uint8)
@@ -476,5 +472,6 @@ def main(opts):
             best_score = val_score['Mean IoU']
             save_ckpt(os.path.join(ck_path, 'best_%s_%s_os%d.pth' %
                                    (opts.model, opts.dataset, opts.output_stride)))
+    # wb.finish()
     print('train done')
 

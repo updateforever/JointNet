@@ -14,14 +14,14 @@ def get_argparser():
     parser = argparse.ArgumentParser()
 
     # Dataset Options
-    parser.add_argument("--data_root", type=str, default='D:/datasets/house2k',
+    parser.add_argument("--data_root", type=str, default='D:/datasets/house2k-master',
                         help="path to Dataset")
     parser.add_argument("--dataset", type=str, default='house2k',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of dataset')
     parser.add_argument("--num_classes", type=int, default=5,
                         help="num classes (default: None)")
     parser.add_argument("--classes_path", type=str,
-                        default='D:/datasets/house2k/class.txt')
+                        default='D:/datasets/house2k-master/class.txt')
     parser.add_argument("--crop_size", type=int, default=640)  # 512
 
     # Model Options
