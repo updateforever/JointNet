@@ -20,7 +20,9 @@ def get_argparser():
     parser.add_argument("--dataset", type=str, default='house2k',
                         choices=['voc', 'cityscapes', 'house2k'], help='Name of dataset')
     parser.add_argument("--num_classes", type=int, default='',
-                        help="num classes (default: None)")  # 8 3
+                        help="num classes (default: None)")  # 8 3 4
+    parser.add_argument("--num_classes1", type=int, default='',
+                        help="num classes (default: None)")
 
     # Model Options
     parser.add_argument("--model_opt", type=str, default='det',
