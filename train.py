@@ -75,7 +75,7 @@ def get_argparser():
     # #segment options
     parser.add_argument("--separable_conv", action='store_true', default=False,
                         help="apply separable conv to decoder and aspp")
-    parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
+    parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16, 32])
 
     # #detect options
     parser.add_argument("--model_path", type=str, default='', help="model_path for train")

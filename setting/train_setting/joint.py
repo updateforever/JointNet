@@ -16,7 +16,7 @@ from metrics import StreamSegMetrics
 
 import torch
 import torch.nn as nn
-from utils.visualizer import Visualizer
+# from utils.visualizer import Visualizer
 
 from PIL import Image
 import matplotlib
@@ -98,12 +98,11 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
 
 
 def main(opts):
-
     # Setup visualization
-    vis = Visualizer(port=opts.vis_port,
-                     env=opts.vis_env) if opts.enable_vis else None
-    if vis is not None:  # display options
-        vis.vis_table("Options", vars(opts))
+    # vis = Visualizer(port=opts.vis_port,
+    #                  env=opts.vis_env) if opts.enable_vis else None
+    # if vis is not None:  # display options
+    #     vis.vis_table("Options", vars(opts))
 
     device = opts.device
 
@@ -224,8 +223,8 @@ def main(opts):
 
             np_loss = loss.detach().cpu().numpy()
             interval_loss += np_loss
-            if vis is not None:
-                vis.vis_scalar('Loss', cur_itrs, np_loss)
+            # if vis is not None:
+            #     vis.vis_scalar('Loss', cur_itrs, np_loss)
 
             if (cur_itrs) % 5 == 0 or cur_itrs == total_itrs:  # 隔5批次打印一次
                 interval_loss = interval_loss / 5
@@ -249,17 +248,17 @@ def main(opts):
             save_ckpt(os.path.join(ck_path, 'best_%s_%s_os%d.pth' %
                                    (opts.model, opts.dataset, opts.output_stride)))
 
-        if vis is not None:  # visualize validation score and samples
-            vis.vis_scalar("[Val] Overall Acc", cur_itrs, val_score['Overall Acc'])
-            vis.vis_scalar("[Val] Mean IoU", cur_itrs, val_score['Mean IoU'])
-            vis.vis_table("[Val] Class IoU", val_score['Class IoU'])
-
-            for k, (img, target, lbl) in enumerate(ret_samples):
-                img = (denorm(img) * 255).astype(np.uint8)
-                target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
-                lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
-                concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
-                vis.vis_image('Sample %d' % k, concat_img)
+        # if vis is not None:  # visualize validation score and samples
+        #     vis.vis_scalar("[Val] Overall Acc", cur_itrs, val_score['Overall Acc'])
+        #     vis.vis_scalar("[Val] Mean IoU", cur_itrs, val_score['Mean IoU'])
+        #     vis.vis_table("[Val] Class IoU", val_score['Class IoU'])
+        #
+        #     for k, (img, target, lbl) in enumerate(ret_samples):
+        #         img = (denorm(img) * 255).astype(np.uint8)
+        #         target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
+        #         lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
+        #         concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
+        #         vis.vis_image('Sample %d' % k, concat_img)
 
 
 if __name__ == '__main__':
