@@ -1,5 +1,0 @@
-pillow
-scikit-learn
-tqdm
-matplotlib==3.1.2
-visdom
